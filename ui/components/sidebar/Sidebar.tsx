@@ -10,17 +10,33 @@ import {
 import { SidebarCloseButton } from "./SidebarCloseButton";
 import Link from "next/link";
 
-export const Sidebar = () => {
+interface SidebarProps {
+  hidden?: boolean;
+}
+
+export const Sidebar = ({ hidden = false }: SidebarProps) => {
   return (
-    <div>
+    <div aria-hidden={hidden}>
       {/* Background Black */}
-      <div className="fixed top-0 w-screen h-screen z-60 bg-black opacity-30 animate-[fadeIn_0.25s_ease-out]" />
+      <div
+        className={`fixed top-0 w-screen h-screen z-60 bg-black transition-opacity duration-300 ease-out ${
+          hidden ? "opacity-0 pointer-events-none" : "opacity-30"
+        }`}
+      />
 
       {/* Blur */}
-      <div className="fade-in fixed top-0 left-0 w-screen h-screen z-60 backdrop-filter backdrop-blur-sm animate-[fadeIn_0.25s_ease-out]" />
+      <div
+        className={`fixed top-0 left-0 w-screen h-screen z-60 backdrop-filter backdrop-blur-sm transition-opacity duration-300 ease-out ${
+          hidden ? "opacity-0 pointer-events-none" : "opacity-100"
+        }`}
+      />
 
       {/* sideMenu */}
-      <nav className="fixed p-5 right-0 top-0 w-[500px] h-screen bg-white z-60 shadow-2xl transform transition-all duration-300 animate-[slideIn_0.3s_ease-out]">
+      <nav
+        className={`fixed p-5 right-0 top-0 w-[500px] h-screen bg-white z-60 rounded-tl-xl shadow-2xl transition-transform duration-300 ease-out ${
+          hidden ? "translate-x-full pointer-events-none" : "translate-x-0"
+        }`}
+      >
         <SidebarCloseButton />
 
         {/* Input */}
@@ -42,7 +58,7 @@ export const Sidebar = () => {
           className="flex items-center mt-10 p-2 hover:bg-gray-100 rounded transition-all"
         >
           <IoPersonOutline size={30} />
-          <span className="ml-3 text-xl">Perfil</span>
+          <span className="ml-5 text-xl">Perfil</span>
         </Link>
 
         <Link
@@ -50,7 +66,7 @@ export const Sidebar = () => {
           className="flex items-center mt-10 p-2 hover:bg-gray-100 rounded transition-all"
         >
           <IoTicketOutline size={30} />
-          <span className="ml-3 text-xl">Órdenes</span>
+          <span className="ml-5 text-xl">Órdenes</span>
         </Link>
 
         <Link
@@ -58,7 +74,7 @@ export const Sidebar = () => {
           className="flex items-center mt-10 p-2 hover:bg-gray-100 rounded transition-all"
         >
           <IoLogInOutline size={30} />
-          <span className="ml-3 text-xl">Ingresar</span>
+          <span className="ml-5 text-xl">Ingresar</span>
         </Link>
 
         <Link
@@ -66,49 +82,40 @@ export const Sidebar = () => {
           className="flex items-center mt-10 p-2 hover:bg-gray-100 rounded transition-all"
         >
           <IoLogOutOutline size={30} />
-          <span className="ml-3 text-xl">Salir</span>
+          <span className="ml-5 text-xl">Salir</span>
         </Link>
 
         {/* Line Separator */}
-        <div className="w-full h-px bg-gray-200 my-10">
-          <Link
-            href={"/"}
-            className="flex items-center mt-10 p-2 hover:bg-gray-100 rounded transition-all"
-          >
-            <IoShareOutline size={30} />
-            <span className="ml-3 text-xl">Products</span>
-          </Link>
+        <div className="w-full h-px bg-gray-200 my-10" />
+        <Link
+          href={"/"}
+          className="flex items-center mt-10 p-2 hover:bg-gray-100 rounded transition-all"
+        >
+          <IoShareOutline size={30} />
+          <span className="ml-5 text-xl">Products</span>
+        </Link>
 
-          <Link
-            href={"/"}
-            className="flex items-center mt-10 p-2 hover:bg-gray-100 rounded transition-all"
-          >
-            <IoTicketOutline size={30} />
-            <span className="ml-3 text-xl">Órdenes</span>
-          </Link>
+        <Link
+          href={"/"}
+          className="flex items-center mt-10 p-2 hover:bg-gray-100 rounded transition-all"
+        >
+          <IoTicketOutline size={30} />
+          <span className="ml-5 text-xl">Órdenes</span>
+        </Link>
 
-          <Link
-            href={"/"}
-            className="flex items-center mt-10 p-2 hover:bg-gray-100 rounded transition-all"
-          >
-            <IoPeopleOutline size={30} />
-            <span className="ml-3 text-xl">Usuarios</span>
-          </Link>
-        </div>
+        <Link
+          href={"/"}
+          className="flex items-center mt-10 p-2 hover:bg-gray-100 rounded transition-all"
+        >
+          <IoPeopleOutline size={30} />
+          <span className="ml-5 text-xl">Usuarios</span>
+        </Link>
       </nav>
 
       <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes slideIn {
-          from { transform: translateX(100%); }
-          to { transform: translateX(0); }
-        }
         @media (prefers-reduced-motion: reduce) {
-          nav, div[class*="animate-"] {
-            animation: none !important;
+          nav, div[class*="fixed"] {
+            transition: none !important;
           }
         }
       `}</style>

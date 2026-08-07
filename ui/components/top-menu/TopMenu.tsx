@@ -2,6 +2,7 @@ import { titleFont } from "@/config/fonts";
 import Link from "next/link";
 import { IoCartOutline, IoSearchOutline, IoMenuOutline } from "react-icons/io5";
 import { ScrollShadow } from "./ScrollShadow";
+import { OpenMenuButton } from "./OpenMenuButton";
 
 const categories = [
   { label: "Hombres", href: "/category/men" },
@@ -69,12 +70,7 @@ export const TopMenu = ({ cartItemCount = 0 }: TopMenuProps) => {
             )}
           </Link>
 
-          <button
-            className="sm:hidden p-2 rounded-md text-slate-600 transition-all duration-200 hover:bg-gray-100 hover:text-slate-900 active:scale-90"
-            aria-label="Abrir menú"
-          >
-            <IoMenuOutline className="w-5 h-5" />
-          </button>
+          <OpenMenuButton />
         </div>
       </nav>
 
