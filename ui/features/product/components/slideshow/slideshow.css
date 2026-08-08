@@ -1,0 +1,71 @@
+.swiper {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.swiper-slide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: #fff;
+}
+
+.swiper-slide img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Main slide area */
+.mySwiper2 {
+  height: auto;
+  aspect-ratio: 4 / 5;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (min-width: 768px) {
+  .mySwiper2 {
+    aspect-ratio: 1024 / 800;
+    max-width: none;
+  }
+}
+
+/* Thumbnails rail */
+.mySwiper {
+  height: 220px;
+  box-sizing: border-box;
+  padding: 10px 0;
+}
+
+.mySwiper .swiper-slide {
+  width: 25%;
+  height: 100%;
+  opacity: 0.5;
+}
+
+.mySwiper .swiper-slide-thumb-active {
+  opacity: 1;
+  border: 2px solid gray;
+  border-radius: 10px;
+}
+
+.mySwiper .swiper-slide:not(.swiper-slide-thumb-active):hover {
+  opacity: 1;
+}
+
+/* Navigation affordance */
+.swiper-button-next,
+.swiper-button-prev {
+  border-radius: 9999px;
+  width: 44px;
+  height: 44px;
+}
+
+.swiper-pagination-bullet {
+  background: #274494;
+}

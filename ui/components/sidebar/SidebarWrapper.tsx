@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { getHandleSidebarStateUseCase } from "../../../modules/shared/ui-state/infrastructure/config/factory/handle-sidebar-state-use-case-factory";
+import { getHandleSidebarStateUseCase } from "../../../modules/shared/ui-state";
 import { Sidebar } from "./Sidebar";
 
 export const SidebarWrapper = () => {

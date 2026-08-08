@@ -31,8 +31,8 @@ export const PageNotFound = () => {
           </p>
 
           <p className="reveal mt-2 max-w-md text-lg font-light text-slate-500 [animation-delay:340ms]">
-            El contenido que buscas no existe o fue movido. Volvé al inicio y
-            seguí explorando.
+            El contenido que buscas no existe o fue movido. Vuelva al inicio y
+            siga explorando.
           </p>
 
           <Link

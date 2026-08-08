@@ -1,7 +1,7 @@
 "use client";
 
 import { IoMenuOutline } from "react-icons/io5";
-import { getHandleSidebarStateUseCase } from "../../../modules/shared/ui-state/infrastructure/config/factory/handle-sidebar-state-use-case-factory";
+import { getHandleSidebarStateUseCase } from "../../../modules/shared/ui-state";
 
 export const OpenMenuButton = () => {
   return (

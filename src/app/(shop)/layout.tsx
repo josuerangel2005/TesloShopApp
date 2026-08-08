@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
-import { Sidebar, TopMenu } from "../../../ui";
-import { SidebarWrapper } from "../../../ui/components/sidebar/SidebarWrapper";
+import { TopMenu, SidebarWrapper } from "../../../ui";
 
 export default function ShopLayout({ children }: { children: ReactNode }) {
   return (

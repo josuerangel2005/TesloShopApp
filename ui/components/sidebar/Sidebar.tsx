@@ -7,6 +7,7 @@ import {
   IoShareOutline,
   IoTicketOutline,
 } from "react-icons/io5";
+import { SidebarBackdrop } from "./SidebarBackdrop";
 import { SidebarCloseButton } from "./SidebarCloseButton";
 import Link from "next/link";
 
@@ -16,24 +17,15 @@ interface SidebarProps {
 
 export const Sidebar = ({ hidden = false }: SidebarProps) => {
   return (
-    <div aria-hidden={hidden}>
-      {/* Background Black */}
-      <div
-        className={`fixed top-0 w-screen h-screen z-60 bg-black transition-opacity duration-300 ease-out ${
-          hidden ? "opacity-0 pointer-events-none" : "opacity-30"
-        }`}
-      />
-
-      {/* Blur */}
-      <div
-        className={`fixed top-0 left-0 w-screen h-screen z-60 backdrop-filter backdrop-blur-sm transition-opacity duration-300 ease-out ${
-          hidden ? "opacity-0 pointer-events-none" : "opacity-100"
-        }`}
-      />
+    <div inert={hidden} aria-hidden={hidden}>
+      <SidebarBackdrop hidden={hidden} />
 
       {/* sideMenu */}
       <nav
-        className={`fixed p-5 right-0 top-0 w-[500px] h-screen bg-white z-60 rounded-tl-xl shadow-2xl transition-transform duration-300 ease-out ${
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menú lateral"
+        className={`fixed right-0 top-0 z-60 h-dvh w-full max-w-[500px] overflow-y-auto bg-white p-5 pr-[max(1.25rem,env(safe-area-inset-right))] pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl transition-transform duration-300 ease-out sm:w-[500px] ${
           hidden ? "translate-x-full pointer-events-none" : "translate-x-0"
         }`}
       >

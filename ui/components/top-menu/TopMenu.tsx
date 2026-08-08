@@ -7,7 +7,7 @@ import { OpenMenuButton } from "./OpenMenuButton";
 const categories = [
   { label: "Hombres", href: "/category/men" },
   { label: "Mujeres", href: "/category/women" },
-  { label: "Niños", href: "/category/kids" },
+  { label: "Niños", href: "/category/kid" },
 ];
 
 interface TopMenuProps {
