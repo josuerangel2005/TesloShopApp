@@ -1,6 +1,7 @@
 import { SeedData } from "../../ui/features/product";
 
 export const initialData: SeedData = {
+  categories: ["shirts", "pants", "hoodies", "hats"],
   products: [
     {
       description:
@@ -682,4 +683,3 @@ export const initialData: SeedData = {
     },
   ],
 };
-

@@ -5,12 +5,12 @@ export interface Product {
   images: string[];
   inStock: number;
   price: number;
-  sizes: ValidSizes[];
+  sizes: string[];
   slug: string;
   tags: string[];
   title: string;
-  type: ValidTypes;
-  gender: "men" | "women" | "kid" | "unisex";
+  type: string;
+  gender: string;
 }
 
 export type ValidSizes = "XS" | "S" | "M" | "L" | "XL" | "XXL" | "XXXL";
@@ -20,4 +20,5 @@ export const validGenders: string[] = ["men", "women", "kid"];
 
 export interface SeedData {
   products: Product[];
+  categories: ValidTypes[];
 }

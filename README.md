@@ -6,17 +6,17 @@ CSS v4, Prisma ORM, and a hexagonal (Ports & Adapters) architecture.
 
 ## Stack
 
-| Layer        | Tech                                                        |
-| ------------ | ----------------------------------------------------------- |
-| Framework    | [Next.js 16.3](https://nextjs.org) (App Router, Turbopack)  |
-| UI           | React 19, React Server Components + Client Islands          |
-| Styling      | Tailwind CSS v4 (`@theme` design tokens)                    |
-| State        | Zustand 5 (isolated behind an adapter)                      |
-| Data         | Prisma ORM 7 (`@prisma/adapter-pg` + `pg`), PostgreSQL      |
-| Validation   | Zod 4                                                       |
-| Carousel     | Swiper 14                                                   |
-| Icons        | react-icons (`io5`)                                         |
-| Language     | TypeScript strict                                           |
+| Layer      | Tech                                                       |
+| ---------- | ---------------------------------------------------------- |
+| Framework  | [Next.js 16.3](https://nextjs.org) (App Router, Turbopack) |
+| UI         | React 19, React Server Components + Client Islands         |
+| Styling    | Tailwind CSS v4 (`@theme` design tokens)                   |
+| State      | Zustand 5 (isolated behind an adapter)                     |
+| Data       | Prisma ORM 7 (`@prisma/adapter-pg` + `pg`), PostgreSQL     |
+| Validation | Zod 4                                                      |
+| Carousel   | Swiper 14                                                  |
+| Icons      | react-icons (`io5`)                                        |
+| Language   | TypeScript strict                                          |
 
 ## Architecture
 
@@ -32,10 +32,10 @@ src/        Next.js application — routes (App Router)
 
 ### `modules/` — the domain core
 
-| Module | Purpose |
-| --- | --- |
-| `modules/products` | Product domain: entities, driven port, use case, Prisma adapter |
-| `modules/shared/ui-state` | UI state (sidebar): Zustand isolated behind a port |
+| Module                    | Purpose                                                         |
+| ------------------------- | --------------------------------------------------------------- |
+| `modules/products`        | Product domain: entities, driven port, use case, Prisma adapter |
+| `modules/shared/ui-state` | UI state (sidebar): Zustand isolated behind a port              |
 
 **`modules/products`** follows the hexagonal layout:
 
@@ -88,40 +88,89 @@ follows a **Server-first** approach:
 
 ### Screens (App Router)
 
-| Route                         | Description                          |
-| ----------------------------- | ------------------------------------ |
-| `/`                           | Home — product grid                   |
-| `/product/[slug]`             | Product detail (slideshow, size, qty) |
-| `/products`                   | Products listing                      |
-| `/category/[id]`              | Category listing                      |
-| `/cart`                       | Cart with live totals                 |
-| `/checkout/address`           | Address form                          |
-| `/checkout`                   | Order review (verify order)           |
-| `/orders`                     | Order list (demo data)                |
-| `/orders/[id]`                | Order detail                          |
-| `/auth/login`                 | Sign in                               |
-| `/auth/new-account`           | Sign up                               |
-| `/terminos` + `/politicas`    | Legal pages (Colombian context)       |
-| `/empty`                      | Empty state demo                      |
-| `/admin`                      | Admin placeholder                     |
+| Route                      | Description                           |
+| -------------------------- | ------------------------------------- |
+| `/`                        | Home — product grid                   |
+| `/product/[slug]`          | Product detail (slideshow, size, qty) |
+| `/products`                | Products listing                      |
+| `/category/[id]`           | Category listing                      |
+| `/cart`                    | Cart with live totals                 |
+| `/checkout/address`        | Address form                          |
+| `/checkout`                | Order review (verify order)           |
+| `/orders`                  | Order list (demo data)                |
+| `/orders/[id]`             | Order detail                          |
+| `/auth/login`              | Sign in                               |
+| `/auth/new-account`        | Sign up                               |
+| `/terminos` + `/politicas` | Legal pages (Colombian context)       |
+| `/empty`                   | Empty state demo                      |
+| `/admin`                   | Admin placeholder                     |
 
 ## Getting Started
 
+### 1. Clone the repository
+
 ```bash
-# 1. Install dependencies
+git clone <repo-url> teslo-shop
+cd teslo-shop
+```
+
+### 2. Install dependencies
+
+```bash
 npm install
+```
 
-# 2. Environment
-#    Copy .env-template to .env and fill DB_USER / DB_NAME / DB_PASSWORD
-#    and DATABASE_URL (e.g. postgresql://USER:PASSWORD@localhost:5432/DB)
+### 3. Configure the environment
 
-# 3. Start PostgreSQL (Docker)
+Copy the template and fill in your database credentials:
+
+```bash
+cp .env-template .env
+```
+
+Edit `.env` (values must match `docker-compose.yml` if you use the local
+PostgreSQL container):
+
+```bash
+DB_USER=postgres
+DB_NAME=teslo-shop
+DB_PASSWORD=123456
+DATABASE_URL="postgresql://postgres:123456@localhost:5432/teslo-shop?schema=public"
+```
+
+### 4. Start PostgreSQL (Docker)
+
+```bash
 docker compose up -d
+```
 
-# 4. Run the Prisma migration generator (once the schema has models)
+### 5. Run Prisma commands
+
+Migrations and the client are generated relative to your local setup, so run
+them once after cloning:
+
+```bash
+# Apply pending migrations to create the schema and tables
 npx prisma migrate dev
 
-# 5. Development server
+# Generate the Prisma Client into src/generated/prisma
+npx prisma generate
+```
+
+### 6. Seed the database (optional but recommended)
+
+Populates the catalog — 4 categories, 52 products and 104 product images:
+
+```bash
+npm run seed
+```
+
+> ⚠️ `npm run seed` **resets** the database first (`deleteAll`), then inserts
+> the catalog. It is meant to be re-run whenever you want fresh demo data.
+
+### 7. Start the development server
+
+```bash
 npm run dev
 ```
 
@@ -134,11 +183,43 @@ npm run dev          # development server (Turbopack)
 npm run build        # production build (type-check + static generation)
 npm start            # run the production build
 npm run lint         # ESLint (Next.js config)
-
-npx prisma validate  # validate the schema
-npx prisma generate  # regenerate the client into src/generated/prisma
-npx prisma migrate dev  # create/apply migrations (requires running DB)
+npm run seed         # reset + insert demo catalog (tsx runner)
 ```
+
+## Prisma commands
+
+The schema lives inside the module, so Prisma reads the paths from
+`prisma.config.ts` (root).
+
+```bash
+# Validate the schema (no DB needed)
+npx prisma validate
+
+# Reformat the schema file
+npx prisma format
+
+# Generate the Prisma Client into src/generated/prisma
+npx prisma generate
+
+# Create a new migration from schema changes
+npx prisma migrate dev --name <migration-name>
+
+# Apply pending migrations / sync dev DB with the schema
+npx prisma migrate dev
+
+# Show migration status (applied vs pending)
+npx prisma migrate status
+
+# Interactive DB browser
+npx prisma studio
+
+# Reset the dev database (drops, re-applies migrations, runs seed)
+npx prisma migrate reset
+```
+
+> **Prisma 7 note**: `npx prisma generate` regenerates the client into
+> `src/generated/prisma` (gitignored). The runtime connection uses the
+> `PrismaPg` adapter inside `prisma.ts` — the URL never lives in the schema.
 
 ## Design conventions
 
@@ -166,6 +247,10 @@ teslo-shop/
 │   │   ├── domain/
 │   │   │   ├── model/
 │   │   │   │   ├── category.ts
+│   │   │   │   ├── commands/
+│   │   │   │   │   ├── category-save-command.ts
+│   │   │   │   │   ├── product-save-command.ts
+│   │   │   │   │   └── product-image-save-command.ts
 │   │   │   │   ├── gender.ts
 │   │   │   │   ├── product.ts
 │   │   │   │   ├── productImage.ts
@@ -291,7 +376,8 @@ teslo-shop/
     ├── config/
     │   └── fonts.ts                   # Inter + Montserrat Alternates (titleFont)
     └── seed/
-        └── seed.ts                    # Demo product catalog
+        ├── seed.ts                    # Demo product catalog (initialData)
+        └── seed-database.ts           # Seed runner: reset + insert via use case
 ```
 
 > `node_modules/`, `.next/`, `src/generated/`, and local tooling directories
@@ -299,10 +385,11 @@ teslo-shop/
 
 ## Roadmap / known gaps
 
-- Data layer is scaffolded: **Prisma is configured** but the schema has no
-  models yet and `PrismaProductsHandler` is an empty class waiting for a
-  repository implementation.
-- Currently uses **seed (demo) data**; no persistence, no API.
+- **Persistence is working**: `PrismaProductsHandler` implements `deleteAll`,
+  `saveAllCategories`, `getCategoryByName`, `saveAllProducts` and
+  `saveAllImageProducts` — the seed populates the catalog for real.
+- The UI still renders **seed (static) data** — pages are not wired to read
+  from the database through the use case yet.
 - Cart is a Client island with local state (no global store yet).
 - Auth pages are presentational stubs.
 

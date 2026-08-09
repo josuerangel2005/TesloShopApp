@@ -1,57 +1,45 @@
-import { Category } from "./category";
-import { Gender } from "./gender";
-import { ProductImage } from "./productImage";
-import { Size } from "./size";
+import { Gender } from "../gender";
+import { Size } from "../size";
 
-export class Product {
-  private readonly id: string;
-  private title: string;
+export class ProductSaveCommand {
   private description: string;
+  private title: string;
   private inStock: number;
   private price: number;
   private sizes: Size[];
   private slug: string;
   private tags: string[];
   private gender: Gender;
-  private category: Category;
-  private productImage: ProductImage;
+  private categoryId: string;
 
   constructor(
-    id: string,
-    title: string,
     description: string,
+    title: string,
     inStock: number,
     price: number,
     sizes: Size[],
     slug: string,
     tags: string[],
     gender: Gender,
-    category: Category,
-    productImage: ProductImage,
+    categoryId: string,
   ) {
-    this.id = id;
-    this.title = title;
     this.description = description;
+    this.title = title;
     this.inStock = inStock;
     this.price = price;
     this.sizes = sizes;
     this.slug = slug;
     this.tags = tags;
     this.gender = gender;
-    this.category = category;
-    this.productImage = productImage;
-  }
-
-  public getId(): string {
-    return this.id;
-  }
-
-  public getTitle(): string {
-    return this.title;
+    this.categoryId = categoryId;
   }
 
   public getDescription(): string {
     return this.description;
+  }
+
+  public getTitle(): string {
+    return this.title;
   }
 
   public getInStock(): number {
@@ -78,11 +66,7 @@ export class Product {
     return this.gender;
   }
 
-  public getCategory(): Category {
-    return this.category;
-  }
-
-  public getProductImage(): ProductImage {
-    return this.productImage;
+  public getCategoryId(): string {
+    return this.categoryId;
   }
 }
