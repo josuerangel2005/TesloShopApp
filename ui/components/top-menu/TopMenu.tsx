@@ -5,6 +5,7 @@ import { ScrollShadow } from "./ScrollShadow";
 import { OpenMenuButton } from "./OpenMenuButton";
 
 const categories = [
+  { label: "Todos", href: "/" },
   { label: "Hombres", href: "/category/men" },
   { label: "Mujeres", href: "/category/women" },
   { label: "Niños", href: "/category/kid" },

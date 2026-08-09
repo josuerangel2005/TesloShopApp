@@ -1,7 +1,19 @@
-export default function () {
+import { initialData } from "@/seed/seed";
+import { OrdersItems, Title } from "../../../../../ui";
+
+interface Props {
+  params: Promise<{ id: string }>;
+}
+
+export default async function ({ params }: Props) {
+  const { id } = await params;
+
   return (
-    <div>
-      <h1>Order #abc</h1>
+    <div className="mb-20 flex justify-center items-center px-4 sm:px-0">
+      <div className="flex w-full max-w-[1000px] flex-col">
+        <Title title={`Orden #${id}`} subTitle="Detalle de tu compra" />
+        <OrdersItems products={initialData.products.slice(0, 3)} />
+      </div>
     </div>
   );
 }

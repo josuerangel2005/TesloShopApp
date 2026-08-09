@@ -1,36 +1,119 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Teslo Shop
+
+E-commerce demo built with the modern Next.js stack. It serves as a learning
+project for App Router, React Server Components, strict TypeScript, Tailwind
+CSS v4, and a hexagonal (Ports & Adapters) architecture.
+
+## Stack
+
+| Layer        | Tech                                              |
+| ------------ | ------------------------------------------------- |
+| Framework    | [Next.js 16.3](https://nextjs.org) (App Router, Turbopack) |
+| UI           | React 19, React Server Components + Client Islands |
+| Styling      | Tailwind CSS v4 (`@theme` design tokens)         |
+| State        | Zustand 5 (isolated behind an adapter)           |
+| Carousel     | Swiper 14                                        |
+| Icons        | react-icons (`io5`)                              |
+| Language     | TypeScript strict                                |
+
+## Architecture
+
+The project follows a **hexagonal (Ports & Adapters)** layout to keep UI and
+state infrastructure decoupled.
+
+```
+src/        Next.js application — routes (App Router)
+ui/         Internal UI library — components + feature modules (barrels)
+modules/    Domain core — business state, ports, adapters, use cases
+```
+
+### `modules/` — the domain core
+
+State lives in `modules/shared/ui-state` with clean dependency arrows:
+
+```
+domain/ports        → contracts (e.g. SidebarStatePort)
+application/usecases→ orchestration (eg. HandleSidebarStateUseCase)
+infrastructure      → adapters and wiring (Zustand store, factory)
+```
+
+Only the infrastructure layer knows about Zustand. The UI consumes the module
+through its **public barrel** (`modules/shared/ui-state`), never touching the
+store or the adapter directly.
+
+### `ui/` — presentation only
+
+Components are exported through **barrels** (`ui/index.ts` +
+`ui/features/*/index.ts`) so consumers never use deep imports. The library
+follows a **Server-first** approach:
+
+- Pages and static containers are Server Components.
+- Interactive pieces are small Client Component "islands"
+  (e.g. `ProductSlideshow`, `QuantitySelector`, `SidebarWrapper`).
+
+### Screens (App Router)
+
+| Route                    | Description                          |
+| ------------------------ | ------------------------------------ |
+| `/`                      | Home — product grid                  |
+| `/product/[slug]`        | Product detail (slideshow, size, qty) |
+| `/cart`                  | Cart with live totals                |
+| `/checkout/address`      | Address form                         |
+| `/checkout`              | Order review (verify order)          |
+| `/orders`                | Order list (demo data)               |
+| `/orders/[id]`           | Order detail                         |
+| `/auth/login`            | Sign in                              |
+| `/auth/new-account`      | Sign up                              |
+| `/terminos` + `/politicas` | Legal pages (Colombian context)    |
+| `/empty`                 | Empty state demo                     |
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run dev     # development server (Turbopack)
+npm run build   # production build (type-check + static generation)
+npm start       # run the production build
+npm run lint    # ESLint (Next.js config)
+```
 
-## Learn More
+## Design conventions
 
-To learn more about Next.js, take a look at the following resources:
+- **Design tokens** live in `src/app/globals.css` under Tailwind v4 `@theme`
+  (`--color-primary`: `#274494` family).
+- Global button classes `.btn-primary` / `.btn-secondary`.
+- Lists/status use pill badges with the primary palette; inputs use a shared
+  focus ring.
+- Animations are CSS-only and respect `prefers-reduced-motion`.
+- UI copy is Spanish; code and identifiers are English.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project structure highlights
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/app/                     App Router pages + layouts
+src/config/fonts.ts         Inter + Montserrat Alternates (titleFont)
+src/seed/seed.ts            Demo product catalog
+ui/components/              TopMenu, Sidebar, Footer, Title, 404...
+ui/features/                 cart, checkout, orders, product, products
+ui/index.ts                  Public library barrel
+modules/shared/ui-state/    Hexagonal sidebar state (Zustand)
+```
 
-## Deploy on Vercel
+## Roadmap / known gaps
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Currently uses **seed (demo) data**; no persistence, no API.
+- Cart is a Client island with local state (no global store yet).
+- Auth pages are presentational stubs.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+> Learning project — illustrations, terms and legal texts are for
+> demonstration purposes.
