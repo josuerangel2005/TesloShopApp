@@ -5,6 +5,7 @@ import { Category } from "../../domain/model/category";
 import { ProductSaveCommand } from "../../domain/model/commands/product-save-command";
 import { ProductImageSaveCommand } from "../../domain/model/commands/product-image-save-command";
 import { ProductImage } from "../../domain/model/productImage";
+import { Gender } from "../../domain/model/gender";
 
 export class HandleProductsUseCase {
   private readonly forHandleProducts: ForHandleProducts;
@@ -43,15 +44,30 @@ export class HandleProductsUseCase {
     return this.forHandleProducts.getProductIdBySlug(slug);
   }
 
-  public getAllProductswithImages(): Promise<Product[]> {
-    return this.forHandleProducts.getAllProductsWithImages();
-  }
-
-  public getImageByProductId(productId: string): Promise<ProductImage> {
-    return this.forHandleProducts.getImageByProductId(productId);
+  public getAllProductswithImages(
+    page: number,
+    take: number,
+  ): Promise<Product[]> {
+    return this.forHandleProducts.getAllProductsWithImages(page, take);
   }
 
   public getImagesByProductId(productId: string): Promise<ProductImage[]> {
     return this.forHandleProducts.getImagesByProductId(productId);
+  }
+
+  public getQuantityProducts(): Promise<number> {
+    return this.forHandleProducts.getQuantityProducts();
+  }
+
+  public getProductsByGender(
+    gender: Gender,
+    page: number,
+    take: number,
+  ): Promise<Product[]> {
+    return this.forHandleProducts.getProductsByGender(gender, page, take);
+  }
+
+  public getQuantityProductsByGender(gender: Gender): Promise<number> {
+    return this.forHandleProducts.getQuantityProductsByGender(gender);
   }
 }

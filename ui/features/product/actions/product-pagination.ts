@@ -1,37 +1,78 @@
 "use server";
 
 import { getHandleProductsUseCase } from "../../../../modules/products";
-import { GenderResponse } from "../interfaces/response/gender-reponse.type";
+import { GenderNotExistsException } from "../../../../modules/products/domain/error/gender-not-exists-exception";
+import { Gender } from "../../../../modules/products/domain/model/gender";
 import { ProductResponse } from "../interfaces/response/product-response.interface";
-import { SizeResponse } from "../interfaces/response/size-response.type";
+import { productToResponse } from "../mappers/product.mapper";
 
-export const getPaginatedProductsWithImages = async (): Promise<
-  ProductResponse[]
-> => {
+interface PaginationOptions {
+  page?: number;
+  take?: number;
+}
+
+export const getPaginatedProductsWithImages = async ({
+  page = 1,
+  take = 12,
+}: PaginationOptions = {}): Promise<ProductResponse[]> => {
+  if (isNaN(page) || isNaN(take)) page = 1;
+  if (page < 1) page = 1;
+  if (take < 1) take = 12;
+
   const handleProductsUseCase = getHandleProductsUseCase();
   try {
-    const data = await handleProductsUseCase.getAllProductswithImages();
+    const data = await handleProductsUseCase.getAllProductswithImages(
+      page,
+      take,
+    );
 
-    return data.map((product) => ({
-      id: product.getId(),
-      title: product.getTitle(),
-      description: product.getDescription(),
-      inStock: product.getInStock(),
-      price: product.getPrice(),
-      sizes: product.getSizes() as SizeResponse[],
-      slug: product.getSlug(),
-      tags: product.getTags(),
-      gender: product.getGender() as GenderResponse,
-      category: {
-        id: product.getCategory().getId(),
-        name: product.getCategory().getName(),
-      },
-      images: product.getProductImages().map((productImage) => ({
-        id: productImage.getId(),
-        url: productImage.getUrl(),
-        productId: productImage.getProductId(),
-      })),
-    }));
+    return data.map(productToResponse);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getQuantityProducts = async (): Promise<number> => {
+  const handleProductsUseCase = getHandleProductsUseCase();
+  try {
+    return await handleProductsUseCase.getQuantityProducts();
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getProductsByGender = async (
+  gender: Gender,
+  { page = 1, take = 12 }: PaginationOptions = {},
+): Promise<ProductResponse[]> => {
+  const handleProductsUseCase = getHandleProductsUseCase();
+
+  if (isNaN(page) || isNaN(take)) page = 1;
+  if (page < 1) page = 1;
+  if (take < 1) take = 12;
+
+  try {
+    if (!Object.values(Gender).includes(gender))
+      throw new GenderNotExistsException(gender);
+
+    const data = await handleProductsUseCase.getProductsByGender(
+      gender,
+      page,
+      take,
+    );
+
+    return data.map(productToResponse);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getQuantityProductsByGender = async (
+  gender: Gender,
+): Promise<number> => {
+  const handleProductsUseCase = getHandleProductsUseCase();
+  try {
+    return await handleProductsUseCase.getQuantityProductsByGender(gender);
   } catch (error) {
     throw error;
   }

@@ -1,10 +1,10 @@
 import { CategorySaveCommand } from "../../modules/products/domain/model/commands/category-save-command";
-import { ProductImageSaveCommand } from "../../modules/products/domain/model/commands/product-image-save-command";
-import { ProductSaveCommand } from "../../modules/products/domain/model/commands/product-save-command";
-import { Gender } from "../../modules/products/domain/model/gender";
-import { Size } from "../../modules/products/domain/model/size";
 import { getHandleProductsUseCase } from "../../modules/products/infrastructure/config/factory/handle-products-use-case-factory";
 import { initialData } from "./seed";
+import {
+  toProductImageSaveCommand,
+  toProductSaveCommand,
+} from "./mappers/seed-product.mapper";
 
 async function main() {
   const handleProductsUseCase = getHandleProductsUseCase();
@@ -27,18 +27,9 @@ async function main() {
     await Promise.all(
       products.map(
         async (product) =>
-          new ProductSaveCommand(
-            product.description,
-            product.title,
-            product.inStock,
-            product.price,
-            product.sizes as Size[],
-            product.slug,
-            product.tags,
-            product.gender as Gender,
-            (
-              await handleProductsUseCase.getCategoryByName(product.type)
-            ).getId(),
+          toProductSaveCommand(
+            product,
+            (await handleProductsUseCase.getCategoryByName(product.type)).getId(),
           ),
       ),
     ),
@@ -51,7 +42,7 @@ async function main() {
       products.flatMap((product) =>
         product.images.map(
           async (img) =>
-            new ProductImageSaveCommand(
+            toProductImageSaveCommand(
               img,
               await handleProductsUseCase.getProductIdBySlug(product.slug),
             ),

@@ -1,17 +1,33 @@
+export const revalidate = 60;
+
 import { notFound } from "next/navigation";
 import { ProductsGrid, Title, validGenders } from "../../../../../ui";
-import { initialData } from "@/seed/seed";
+import {
+  getProductsByGender,
+  getQuantityProductsByGender,
+} from "../../../../../ui/features/product/actions/product-pagination";
+import { Gender } from "../../../../../modules/products/domain/model/gender";
+import { Pagination } from "../../../../../ui/components/pagination/Pagination";
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ page: number }>;
 }
 
-const products = initialData.products;
-
-export default async function ({ params }: Props) {
+export default async function ({ params, searchParams }: Props) {
   const { id } = await params;
 
   if (!validGenders.includes(id)) notFound();
+
+  const { page } = await searchParams;
+
+  const products = await getProductsByGender(
+    id.trim().toUpperCase() as Gender,
+    { page },
+  );
+  const totalProducts = await getQuantityProductsByGender(
+    id.trim().toUpperCase() as Gender,
+  );
 
   return (
     <>
@@ -26,9 +42,8 @@ export default async function ({ params }: Props) {
         }
         className="mb-2"
       />
-      <ProductsGrid
-        products={products.filter((product) => product.gender === id)}
-      />
+      <ProductsGrid products={products} />
+      <Pagination take={12} totalElements={totalProducts} />
     </>
   );
 }
