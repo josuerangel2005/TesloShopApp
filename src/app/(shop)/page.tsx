@@ -1,14 +1,14 @@
-import { initialData } from "@/seed/seed";
 import { Title } from "../../../ui";
 import { ProductsGrid } from "../../../ui/features/products";
+import { getPaginatedProductsWithImages } from "../../../ui/features/product/actions/product-pagination";
 
-const products = initialData.products;
+export default async function () {
+  const productsTemp = await getPaginatedProductsWithImages();
 
-export default function Home() {
   return (
     <>
       <Title title="Tienda" subTitle="Todos los productos" className="mb-2" />
-      <ProductsGrid products={products} />
+      <ProductsGrid products={productsTemp} />
     </>
   );
 }

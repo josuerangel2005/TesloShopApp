@@ -1,14 +1,12 @@
-import { Product } from "./product";
-
 export class ProductImage {
   private readonly id: number;
   private url: string;
-  private product: Product;
+  private productId: string;
 
-  constructor(id: number, url: string, product: Product) {
+  constructor(id: number, url: string, productId: string) {
     this.id = id;
     this.url = url;
-    this.product = product;
+    this.productId = productId;
   }
 
   public getId(): number {
@@ -19,7 +17,7 @@ export class ProductImage {
     return this.url;
   }
 
-  public getProduct(): Product {
-    return this.product;
+  public getProductId(): string {
+    return this.productId;
   }
 }

@@ -53,7 +53,7 @@ async function main() {
           async (img) =>
             new ProductImageSaveCommand(
               img,
-              await handleProductsUseCase.getProductBySlug(product.slug),
+              await handleProductsUseCase.getProductIdBySlug(product.slug),
             ),
         ),
       ),

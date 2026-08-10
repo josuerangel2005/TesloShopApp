@@ -14,7 +14,7 @@ export class Product {
   private tags: string[];
   private gender: Gender;
   private category: Category;
-  private productImage: ProductImage;
+  private productImages: ProductImage[];
 
   constructor(
     id: string,
@@ -27,7 +27,7 @@ export class Product {
     tags: string[],
     gender: Gender,
     category: Category,
-    productImage: ProductImage,
+    productImages: ProductImage[],
   ) {
     this.id = id;
     this.title = title;
@@ -39,7 +39,7 @@ export class Product {
     this.tags = tags;
     this.gender = gender;
     this.category = category;
-    this.productImage = productImage;
+    this.productImages = productImages;
   }
 
   public getId(): string {
@@ -82,7 +82,7 @@ export class Product {
     return this.category;
   }
 
-  public getProductImage(): ProductImage {
-    return this.productImage;
+  public getProductImages(): ProductImage[] {
+    return this.productImages;
   }
 }
