@@ -4,9 +4,10 @@ import { useState } from "react";
 import { Product, ValidSizes } from "../../interfaces/product.interface";
 import { SizeSelector } from "../size-selector/SizeSelector";
 import { QuantitySelector } from "../quantity-selector/QuantitySelector";
+import { ProductResponse } from "../../interfaces/response/product-response.interface";
 
 interface Props {
-  product: Product;
+  product: ProductResponse;
 }
 
 export const ProductDetails = ({ product }: Props) => {

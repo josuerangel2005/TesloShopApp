@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Title } from "../../../../../ui";
+
+export const metadata: Metadata = {
+  title: "Dirección de entrega",
+  description: "Ingresa la dirección de entrega de tu orden de compra.",
+};
 
 const fieldClass =
   "rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 transition-colors placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";

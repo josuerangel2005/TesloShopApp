@@ -11,11 +11,9 @@ import { ProductSaveCommand } from "../../../../domain/model/commands/product-sa
 import { ProductImageSaveCommand } from "../../../../domain/model/commands/product-image-save-command";
 import { ProductNotExistsException } from "../../../../domain/error/product-not-exists-exception";
 import { Product } from "../../../../domain/model/product";
-import { ProductImage } from "../../../../domain/model/productImage";
 import { Gender as GenderModel } from "../../../../domain/model/gender";
 import { categoryRowToDomain } from "./utils/category.mapper";
 import { productRowToDomain } from "./utils/product.mapper";
-import { productImageRowToDomain } from "./utils/product-image.mapper";
 
 export class PrismaProductsHandler implements ForHandleProducts {
   private readonly prismaClient: typeof prisma;
@@ -82,27 +80,6 @@ export class PrismaProductsHandler implements ForHandleProducts {
       if (error instanceof ProductsPersistenceException) throw error;
       throw new ProductsPersistenceException(
         `Failed to get category by name: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
-
-  public async getCategoryById(categoryId: string): Promise<Category> {
-    try {
-      const data = await this.prismaClient.category.findFirstOrThrow({
-        where: {
-          id: categoryId,
-        },
-      });
-      return categoryRowToDomain(data);
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2025"
-      )
-        throw new CategoryNotExistsException(categoryId);
-      if (error instanceof ProductsPersistenceException) throw error;
-      throw new ProductsPersistenceException(
-        `Failed to get category by id: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }
@@ -180,20 +157,12 @@ export class PrismaProductsHandler implements ForHandleProducts {
     take: number,
   ): Promise<Product[]> {
     try {
-      return await Promise.all(
-        (
-          await this.prismaClient.product.findMany({
-            take,
-            skip: (page - 1) * take,
-          })
-        ).map(async (row) =>
-          productRowToDomain(
-            row,
-            await this.getCategoryById(row.categoryId),
-            await this.getImagesByProductId(row.id),
-          ),
-        ),
-      );
+      const rows = await this.prismaClient.product.findMany({
+        take,
+        skip: (page - 1) * take,
+        include: { category: true, productImages: true },
+      });
+      return rows.map((row) => productRowToDomain(row));
     } catch (error) {
       if (
         error instanceof CategoryNotExistsException ||
@@ -202,22 +171,6 @@ export class PrismaProductsHandler implements ForHandleProducts {
         throw error;
       throw new ProductsPersistenceException(
         `Failed to get products with images: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
-
-  public async getImagesByProductId(
-    productId: string,
-  ): Promise<ProductImage[]> {
-    try {
-      const data = await this.prismaClient.productImage.findMany({
-        where: { productId },
-      });
-      return data.map((img) => productImageRowToDomain(img));
-    } catch (error) {
-      if (error instanceof ProductsPersistenceException) throw error;
-      throw new ProductsPersistenceException(
-        `Failed to get images by product id: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }
@@ -239,23 +192,15 @@ export class PrismaProductsHandler implements ForHandleProducts {
     take: number,
   ): Promise<Product[]> {
     try {
-      return await Promise.all(
-        (
-          await this.prismaClient.product.findMany({
-            where: {
-              gender: this.toPrismaGender(gender),
-            },
-            take,
-            skip: (page - 1) * take,
-          })
-        ).map(async (row) =>
-          productRowToDomain(
-            row,
-            await this.getCategoryById(row.categoryId),
-            await this.getImagesByProductId(row.id),
-          ),
-        ),
-      );
+      const rows = await this.prismaClient.product.findMany({
+        where: {
+          gender: this.toPrismaGender(gender),
+        },
+        take,
+        skip: (page - 1) * take,
+        include: { category: true, productImages: true },
+      });
+      return rows.map((row) => productRowToDomain(row));
     } catch (error) {
       if (
         error instanceof CategoryNotExistsException ||
@@ -282,6 +227,47 @@ export class PrismaProductsHandler implements ForHandleProducts {
       throw new ProductsPersistenceException(
         `Failed to count products: ${error instanceof Error ? error.message : String(error)}`,
       );
+    }
+  }
+
+  public async getProductBySlug(slug: string): Promise<Product> {
+    try {
+      const data = await this.prismaClient.product.findFirstOrThrow({
+        where: {
+          slug,
+        },
+        include: { category: true, productImages: true },
+      });
+
+      return productRowToDomain(data);
+    } catch (error) {
+      if (
+        error instanceof CategoryNotExistsException ||
+        error instanceof ProductsPersistenceException
+      )
+        throw error;
+      throw new ProductsPersistenceException(
+        `Failed to get products by slug: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  public async getStockByProductSlug(slug: string): Promise<number> {
+    try {
+      return (
+        await this.prismaClient.product.findFirstOrThrow({
+          where: {
+            slug,
+          },
+        })
+      ).inStock;
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      )
+        throw new ProductNotExistsException(slug);
+      throw error;
     }
   }
 }

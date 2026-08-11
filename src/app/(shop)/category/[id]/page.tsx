@@ -1,5 +1,11 @@
 export const revalidate = 60;
 
+export const metadata: Metadata = {
+  title: "Categoría",
+  description: "Explora los productos de la categoría seleccionada.",
+};
+
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductsGrid, Title, validGenders } from "../../../../../ui";
 import {

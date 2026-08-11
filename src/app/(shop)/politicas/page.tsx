@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Title } from "../../../../ui";
+
+export const metadata: Metadata = {
+  title: "Políticas",
+  description:
+    "Conoce nuestras políticas de privacidad y el tratamiento de tus datos personales.",
+};
 
 const h2Class = "text-base font-semibold tracking-tight text-slate-800";
 const pClass = "text-sm leading-relaxed text-slate-600";

@@ -54,7 +54,13 @@ infrastructure/
 Only **infrastructure** touches Prisma. The **domain** declares the contract
 (`ForHandleProducts`), the **application** orchestrates it
 (`HandleProductsUseCase`), and the **adapter** implements it
-(`PrismaProductsHandler`).
+(`PrismaProductsHandler`). Each layer maps its own data:
+
+- Adapter `utils/` mappers convert **rows → domain** (with `include`
+  relations).
+- UI `mappers/` convert **domain → response** contracts
+  (`productToResponse`).
+- `src/seed/mappers/` convert **seed data → save commands**.
 
 **`modules/shared/ui-state`** uses the same pattern for browser state: the UI
 consumes a driven port through a public barrel, never the Zustand store.
@@ -86,24 +92,48 @@ follows a **Server-first** approach:
 - Interactive pieces are small Client Component "islands"
   (e.g. `ProductSlideshow`, `QuantitySelector`, `SidebarWrapper`).
 
+### Data flow: pages → actions → use case → adapter
+
+Pages never touch the adapter directly. They call **server actions**
+(`ui/features/product/actions/`) which are `"use server"` functions that get
+the use case from the module factory:
+
+```
+src/app/(shop)/page.tsx
+  └─ getPaginatedProductsWithImages({ page, take })   [server action]
+       └─ HandleProductsUseCase.getAllProductsWithImages(page, take)
+            └─ PrismaProductsHandler (1 query with include)
+```
+
+The same pattern powers stock on the product page:
+`StockLabel` → `getStockByProductSlug` → use case → handler.
+
 ### Screens (App Router)
 
-| Route                      | Description                           |
-| -------------------------- | ------------------------------------- |
-| `/`                        | Home — product grid                   |
-| `/product/[slug]`          | Product detail (slideshow, size, qty) |
-| `/products`                | Products listing                      |
-| `/category/[id]`           | Category listing                      |
-| `/cart`                    | Cart with live totals                 |
-| `/checkout/address`        | Address form                          |
-| `/checkout`                | Order review (verify order)           |
-| `/orders`                  | Order list (demo data)                |
-| `/orders/[id]`             | Order detail                          |
-| `/auth/login`              | Sign in                               |
-| `/auth/new-account`        | Sign up                               |
-| `/terminos` + `/politicas` | Legal pages (Colombian context)       |
-| `/empty`                   | Empty state demo                      |
-| `/admin`                   | Admin placeholder                     |
+| Route                      | Description                                    |
+| -------------------------- | ---------------------------------------------- |
+| `/`                        | Home — product grid (read from Postgres)       |
+| `/product/[slug]`          | Product detail (slideshow, size, qty, stock)   |
+| `/products`                | Products listing                               |
+| `/category/[id]`           | Category listing by gender (paged)             |
+| `/cart`                    | Cart with live totals                          |
+| `/checkout/address`        | Address form                                   |
+| `/checkout`                | Order review (verify order)                    |
+| `/orders`                  | Order list (demo data)                         |
+| `/orders/[id]`             | Order detail                                   |
+| `/auth/login`              | Sign in                                        |
+| `/auth/new-account`        | Sign up                                        |
+| `/terminos` + `/politicas` | Legal pages (Colombian context)                |
+| `/empty`                   | Empty state demo                               |
+| `/admin`                   | Admin placeholder                              |
+
+> The shop pages are wired to the database through **server actions**
+> (`ui/features/product/actions`) that call the use case. The home
+> (`getPaginatedProductsWithImages`) and category pages
+> (`getProductsByGender`) use Prisma `include` to fetch each product with its
+> category and images in a single query, then render with
+> `revalidate = 60` (ISR) — or `generateMetadata` per product on
+> `/product/[slug]`.
 
 ## Getting Started
 
@@ -258,8 +288,10 @@ teslo-shop/
 │   │   │   ├── error/
 │   │   │   │   ├── category-already-exists-exception.ts
 │   │   │   │   ├── category-not-exists-exception.ts
+│   │   │   │   ├── gender-not-exists-exception.ts
 │   │   │   │   ├── product-already-exists-exception.ts
-│   │   │   │   └── product-not-exists-exception.ts
+│   │   │   │   ├── product-not-exists-exception.ts
+│   │   │   │   └── products-persistence-exception.ts
 │   │   │   └── ports/
 │   │   │       └── drivens/
 │   │   │           └── for-handle-products.ts
@@ -271,6 +303,10 @@ teslo-shop/
 │   │       │   └── out/
 │   │       │       └── HandleProducts/
 │   │       │           ├── prisma-products-handler.ts
+│   │       │           ├── utils/              # Adapter mappers (row → domain)
+│   │       │           │   ├── category.mapper.ts
+│   │       │           │   ├── product-image.mapper.ts
+│   │       │           │   └── product.mapper.ts
 │   │       │           └── persistence/
 │   │       │               └── prisma/
 │   │       │                   └── schema.prisma
@@ -325,8 +361,14 @@ teslo-shop/
 │       │       └── OrdersItems.tsx
 │       ├── product/
 │       │   ├── index.ts
+│       │   ├── actions/            # Server actions (pages → use case)
+│       │   │   ├── get-product-by-slug.ts
+│       │   │   └── product-pagination.ts
 │       │   ├── interfaces/
-│       │   │   └── product.interface.ts
+│       │   │   ├── product.interface.ts
+│       │   │   └── response/       # UI response contracts
+│       │   ├── mappers/
+│       │   │   └── product.mapper.ts  # productToResponse (domain → UI)
 │       │   └── components/
 │       │       ├── product-details/
 │       │       │   └── ProductDetails.tsx
@@ -334,10 +376,12 @@ teslo-shop/
 │       │       │   └── QuantitySelector.tsx
 │       │       ├── size-selector/
 │       │       │   └── SizeSelector.tsx
-│       │       └── slideshow/
-│       │           ├── ProductSlideshow.tsx
-│       │           ├── ProductMobileSlideshow.tsx
-│       │           └── slideshow.css
+│       │       ├── slideshow/
+│       │       │   ├── ProductSlideshow.tsx
+│       │       │   ├── ProductMobileSlideshow.tsx
+│       │       │   └── slideshow.css
+│       │       └── stock-label/
+│       │           └── StockLabel.tsx
 │       └── products/
 │           ├── index.ts
 │           └── products-grid/
@@ -346,11 +390,11 @@ teslo-shop/
 │               └── ProductGridImage.tsx
 └── src/
     ├── app/
-    │   ├── layout.tsx                 # Root layout (fonts, globals)
+    │   ├── layout.tsx                 # Root layout (fonts, globals, metadata)
     │   ├── globals.css                # Tailwind v4 tokens + global styles
     │   ├── (shop)/
     │   │   ├── layout.tsx
-    │   │   ├── page.tsx               # Home
+    │   │   ├── page.tsx               # Home (paged catalog, ISR)
     │   │   ├── admin/page.tsx
     │   │   ├── cart/page.tsx
     │   │   ├── category/
@@ -377,7 +421,9 @@ teslo-shop/
     │   └── fonts.ts                   # Inter + Montserrat Alternates (titleFont)
     └── seed/
         ├── seed.ts                    # Demo product catalog (initialData)
-        └── seed-database.ts           # Seed runner: reset + insert via use case
+        ├── seed-database.ts           # Seed runner: reset + insert via use case
+        └── mappers/                   # Seed input mappers (UI data → commands)
+            └── seed-product.mapper.ts
 ```
 
 > `node_modules/`, `.next/`, `src/generated/`, and local tooling directories
@@ -385,13 +431,14 @@ teslo-shop/
 
 ## Roadmap / known gaps
 
-- **Persistence is working**: `PrismaProductsHandler` implements `deleteAll`,
-  `saveAllCategories`, `getCategoryByName`, `saveAllProducts` and
-  `saveAllImageProducts` — the seed populates the catalog for real.
-- The UI still renders **seed (static) data** — pages are not wired to read
-  from the database through the use case yet.
+- **Catalog reads from Postgres**: home, category (by gender) and product
+  detail pages fetch through the use case; `PrismaProductsHandler` covers
+  paging (`getAllProductsWithImages`, `getProductsByGender`), counts,
+  by-slug lookups and stock. Seed populates the catalog for real.
 - Cart is a Client island with local state (no global store yet).
 - Auth pages are presentational stubs.
+- Orders/admin/checkout flows still render demo or placeholder data.
+- No automated tests yet (no test runner or suite configured).
 
 ---
 

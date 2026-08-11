@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import { initialData } from "@/seed/seed";
 import { CheckoutItems, Title } from "../../../../ui";
+
+export const metadata: Metadata = {
+  title: "Verificar orden",
+  description: "Revisa el resumen de tu orden antes de confirmar la compra.",
+};
 
 export default function () {
   return (

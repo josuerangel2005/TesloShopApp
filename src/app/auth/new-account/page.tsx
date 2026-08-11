@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { titleFont } from "@/config/fonts";
+
+export const metadata: Metadata = {
+  title: "Crear cuenta",
+  description: "Crea tu cuenta y empieza a comprar en la tienda.",
+};
 
 const fieldClass =
   "rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 transition-colors placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";

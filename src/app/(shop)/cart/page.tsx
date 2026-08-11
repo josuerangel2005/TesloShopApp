@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import { CartItems, Title } from "../../../../ui";
 import { initialData } from "@/seed/seed";
+
+export const metadata: Metadata = {
+  title: "Carrito de compras",
+  description: "Revisa los productos de tu carrito antes de comprar.",
+};
 
 export default function CartPage() {
   return (

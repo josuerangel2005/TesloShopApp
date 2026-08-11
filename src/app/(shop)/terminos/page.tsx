@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Title } from "../../../../ui";
+
+export const metadata: Metadata = {
+  title: "Términos y condiciones",
+  description: "Conoce los términos y condiciones de uso y compra de la tienda.",
+};
 
 const h2Class = "text-base font-semibold tracking-tight text-slate-800";
 const pClass = "text-sm leading-relaxed text-slate-600";

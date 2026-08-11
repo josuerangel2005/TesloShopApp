@@ -4,14 +4,11 @@ import { ProductImageSaveCommand } from "../../model/commands/product-image-save
 import { ProductSaveCommand } from "../../model/commands/product-save-command";
 import { Gender } from "../../model/gender";
 import { Product } from "../../model/product";
-import { ProductImage } from "../../model/productImage";
 
 export interface ForHandleProducts {
   deleteAll: () => Promise<void>;
   getAllProductsWithImages: (page: number, take: number) => Promise<Product[]>;
-  getCategoryById: (category: string) => Promise<Category>;
   getCategoryByName: (name: string) => Promise<Category>;
-  getImagesByProductId: (productId: string) => Promise<ProductImage[]>;
   getProductIdBySlug: (slug: string) => Promise<string>;
   getProductsByGender: (
     gender: Gender,
@@ -23,4 +20,6 @@ export interface ForHandleProducts {
   saveAllImageProducts: (images: ProductImageSaveCommand[]) => Promise<void>;
   saveAllProducts: (products: ProductSaveCommand[]) => Promise<void>;
   getQuantityProductsByGender: (gender: Gender) => Promise<number>;
+  getProductBySlug: (slug: string) => Promise<Product>;
+  getStockByProductSlug: (slug: string) => Promise<number>;
 }

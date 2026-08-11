@@ -1,15 +1,15 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { Product } from "../../../../../domain/model/product";
-import { Category } from "../../../../../domain/model/category";
-import { ProductImage } from "../../../../../domain/model/productImage";
 import { Size } from "../../../../../domain/model/size";
 import { Gender as GenderModel } from "../../../../../domain/model/gender";
+import { categoryRowToDomain } from "./category.mapper";
+import { productImageRowToDomain } from "./product-image.mapper";
 
-export const productRowToDomain = (
-  row: Prisma.ProductGetPayload<{}>,
-  category: Category,
-  images: ProductImage[],
-): Product =>
+type ProductWithRelations = Prisma.ProductGetPayload<{
+  include: { category: true; productImages: true };
+}>;
+
+export const productRowToDomain = (row: ProductWithRelations): Product =>
   new Product(
     row.id,
     row.title,
@@ -20,6 +20,6 @@ export const productRowToDomain = (
     row.slug,
     row.tags,
     row.gender as GenderModel,
-    category,
-    images,
+    categoryRowToDomain(row.category),
+    row.productImages.map((img) => productImageRowToDomain(img)),
   );

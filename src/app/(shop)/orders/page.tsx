@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   IoCardOutline,
@@ -5,6 +6,11 @@ import {
   IoChevronForwardOutline,
 } from "react-icons/io5";
 import { Title } from "../../../../ui";
+
+export const metadata: Metadata = {
+  title: "Mis órdenes",
+  description: "Consulta el historial de tus órdenes de compra.",
+};
 
 const orders = [
   {

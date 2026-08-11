@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import { initialData } from "@/seed/seed";
 import { OrdersItems, Title } from "../../../../../ui";
+
+export const metadata: Metadata = {
+  title: "Detalle de la orden",
+  description: "Consulta el detalle de tu orden de compra.",
+};
 
 interface Props {
   params: Promise<{ id: string }>;

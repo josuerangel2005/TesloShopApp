@@ -1,11 +1,15 @@
+export const revalidate = 604800; // 7 días
+
 import { titleFont } from "@/config/fonts";
-import { initialData } from "@/seed/seed";
 import { notFound } from "next/navigation";
 import {
   ProductDetails,
   ProductMobileSlideshow,
   ProductSlideshow,
 } from "../../../../../ui/features/product";
+import { getProductBySlug } from "../../../../../ui/features/product/actions/get-product-by-slug";
+import { StockLabel } from "../../../../../ui/features/product/components/stock-label/StockLabel";
+import { Metadata, ResolvingMetadata } from "next";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -16,9 +20,28 @@ const usd = new Intl.NumberFormat("en-US", {
   currency: "USD",
 });
 
+export async function generateMetadata(
+  { params }: Props,
+  parent: ResolvingMetadata,
+): Promise<Metadata> {
+  const slug = (await params).slug;
+
+  const product = await getProductBySlug(slug);
+
+  return {
+    title: product?.title ?? "Porducto no encontrado",
+    description: product.description ?? "",
+    openGraph: {
+      title: product?.title ?? "Porducto no encontrado",
+      description: product.description ?? "",
+      images: [`/products/${product.images[1].url}`],
+    },
+  };
+}
+
 export default async function ({ params }: Props) {
   const { slug } = await params;
-  const product = initialData.products.find((product) => product.slug === slug);
+  const product = await getProductBySlug(slug);
 
   if (!product) notFound();
 
@@ -28,13 +51,13 @@ export default async function ({ params }: Props) {
       <div className="col-span-1 md:col-span-2">
         <ProductMobileSlideshow
           title={product.title}
-          images={product.images}
+          images={product.images.map((img) => img.url)}
           className="block md:hidden"
         />
 
         <ProductSlideshow
           title={product.title}
-          images={product.images}
+          images={product.images.map((img) => img.url)}
           className="hidden md:block"
         />
       </div>
@@ -48,6 +71,8 @@ export default async function ({ params }: Props) {
           >
             Inicio / <span className="capitalize">{product.gender}</span>
           </nav>
+
+          <StockLabel slug={product.slug} />
 
           <h1
             className={`${titleFont.className} antialiased mt-3 text-2xl font-semibold text-slate-800`}

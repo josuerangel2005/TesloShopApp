@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { IoCartOutline } from "react-icons/io5";
+
+export const metadata: Metadata = {
+  title: "Carrito vacío",
+  description: "Tu carrito está vacío. Explora la tienda y agrega productos.",
+};
 
 export default function () {
   return (

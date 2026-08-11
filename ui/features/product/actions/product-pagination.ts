@@ -21,7 +21,7 @@ export const getPaginatedProductsWithImages = async ({
 
   const handleProductsUseCase = getHandleProductsUseCase();
   try {
-    const data = await handleProductsUseCase.getAllProductswithImages(
+    const data = await handleProductsUseCase.getAllProductsWithImages(
       page,
       take,
     );

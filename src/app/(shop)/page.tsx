@@ -1,5 +1,17 @@
 export const revalidate = 60;
 
+export const metadata: Metadata = {
+  title: "Catálogo de productos",
+  description:
+    "Explora el catálogo completo de productos disponibles en la tienda.",
+  openGraph: {
+    title: "Catálogo de productos",
+    description:
+      "Explora el catálogo completo de productos disponibles en la tienda.",
+  },
+};
+
+import type { Metadata } from "next";
 import { Title } from "../../../ui";
 import { ProductsGrid } from "../../../ui/features/products";
 import {
