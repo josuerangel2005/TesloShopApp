@@ -41,6 +41,25 @@
 }
 
 /*
+ * Shared fade-out animation.
+ * Mirrors fade-in so auto-dismissable components can leave smoothly.
+ */
+@utility fade-out {
+  animation: fade-out 0.4s ease-in both;
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/*
  * Buttons — plain CSS referencing theme tokens. Kept as composable classes
  * exactly as the original intended (primario / secundario), but no fragile @apply.
  */

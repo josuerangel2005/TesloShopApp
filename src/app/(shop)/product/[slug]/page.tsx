@@ -84,16 +84,6 @@ export default async function ({ params }: Props) {
             {usd.format(product.price)}
           </p>
 
-          {product.inStock > 0 ? (
-            <span className="inline-block rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs text-emerald-700">
-              En stock: {product.inStock}
-            </span>
-          ) : (
-            <span className="inline-block rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs text-red-700">
-              Agotado
-            </span>
-          )}
-
           <ProductDetails product={product} />
 
           <div className="mt-8">

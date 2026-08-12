@@ -2,11 +2,12 @@
 
 import clsx from "clsx";
 import { ValidSizes } from "../../interfaces/product.interface";
+import { Size } from "../../../../../modules/shared/ui-state/domain/model/size";
 
 interface Props {
-  selectedSize: ValidSizes | undefined;
-  availableSizes: ValidSizes[];
-  onSizeChange: (size: ValidSizes) => void;
+  selectedSize: Size | undefined;
+  availableSizes: Size[];
+  onSizeChange: (size: Size) => void;
 }
 
 export const SizeSelector = ({
@@ -33,11 +34,10 @@ export const SizeSelector = ({
               className={clsx(
                 "rounded-full border px-4 py-2 text-sm font-medium transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                 {
-                  "bg-primary border-primary text-white":
-                    isSelected,
+                  "bg-primary border-primary text-white": isSelected,
                   "bg-white border-slate-300 text-slate-700 hover:border-primary hover:text-primary":
                     !isSelected,
-                }
+                },
               )}
             >
               {size}

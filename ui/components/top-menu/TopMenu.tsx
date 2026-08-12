@@ -1,8 +1,9 @@
 import { titleFont } from "@/config/fonts";
 import Link from "next/link";
-import { IoCartOutline, IoSearchOutline, IoMenuOutline } from "react-icons/io5";
+import { IoSearchOutline } from "react-icons/io5";
 import { ScrollShadow } from "./ScrollShadow";
 import { OpenMenuButton } from "./OpenMenuButton";
+import { TopMenuCartCount } from "./TopMenuCartCount";
 
 const categories = [
   { label: "Todos", href: "/" },
@@ -11,11 +12,7 @@ const categories = [
   { label: "Niños", href: "/category/kid" },
 ];
 
-interface TopMenuProps {
-  cartItemCount?: number;
-}
-
-export const TopMenu = ({ cartItemCount = 0 }: TopMenuProps) => {
+export const TopMenu = () => {
   return (
     <ScrollShadow>
       <nav className="flex px-5 sm:px-8 justify-between items-center w-full min-h-16">
@@ -55,21 +52,7 @@ export const TopMenu = ({ cartItemCount = 0 }: TopMenuProps) => {
             <IoSearchOutline className="w-5 h-5" />
           </Link>
 
-          <Link
-            href={"/cart"}
-            aria-label="Carrito"
-            className="relative p-2 rounded-md text-slate-600 transition-all duration-200 hover:bg-gray-100 hover:text-slate-900 active:scale-90"
-          >
-            <IoCartOutline className="w-5 h-5" />
-            {cartItemCount > 0 && (
-              <span
-                key={cartItemCount}
-                className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-white [animation:cartPop_0.35s_ease-out]"
-              >
-                {cartItemCount}
-              </span>
-            )}
-          </Link>
+          <TopMenuCartCount />
 
           <OpenMenuButton />
         </div>

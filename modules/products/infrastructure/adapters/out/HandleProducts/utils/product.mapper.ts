@@ -1,6 +1,6 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { Product } from "../../../../../domain/model/product";
-import { Size } from "../../../../../domain/model/size";
+import { Size } from "../../../../../../shared/ui-state/domain/model/size";
 import { Gender as GenderModel } from "../../../../../domain/model/gender";
 import { categoryRowToDomain } from "./category.mapper";
 import { productImageRowToDomain } from "./product-image.mapper";

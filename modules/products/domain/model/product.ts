@@ -1,7 +1,7 @@
 import { Category } from "./category";
 import { Gender } from "./gender";
 import { ProductImage } from "./productImage";
-import { Size } from "./size";
+import { Size } from "../../../shared/ui-state/domain/model/size";
 
 export class Product {
   private readonly id: string;

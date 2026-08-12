@@ -1,7 +1,7 @@
 import { Gender } from "../../../modules/products/domain/model/gender";
 import { ProductImageSaveCommand } from "../../../modules/products/domain/model/commands/product-image-save-command";
 import { ProductSaveCommand } from "../../../modules/products/domain/model/commands/product-save-command";
-import { Size } from "../../../modules/products/domain/model/size";
+import { Size } from "../../../modules/shared/ui-state/domain/model/size";
 import { Product } from "../../../ui/features/product/interfaces/product.interface";
 
 export const toProductSaveCommand = (

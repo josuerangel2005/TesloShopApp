@@ -1,5 +1,5 @@
 import { Gender } from "../gender";
-import { Size } from "../size";
+import { Size } from "../../../../shared/ui-state/domain/model/size";
 
 export class ProductSaveCommand {
   private description: string;
