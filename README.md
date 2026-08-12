@@ -32,16 +32,16 @@ src/        Next.js application — routes (App Router)
 
 ### `modules/` — the domain core
 
-| Module                    | Purpose                                                         |
-| ------------------------- | --------------------------------------------------------------- |
-| `modules/products`        | Product domain: entities, driven port, use case, Prisma adapter |
-| `modules/shared/ui-state` | UI state (sidebar): Zustand isolated behind a port              |
+| Module                    | Purpose                                                              |
+| ------------------------- | -------------------------------------------------------------------- |
+| `modules/products`        | Product domain: entities, driven port, use case, Prisma adapter      |
+| `modules/shared/ui-state` | Shared UI state (sidebar + cart + `Size`): Zustand behind ports      |
 
 **`modules/products`** follows the hexagonal layout:
 
 ```
 domain/
-  model/        Entities (Product, Category, ProductImage, Size, Gender)
+  model/        Entities (Product, Category, ProductImage, Gender)
   error/        Domain exceptions (ProductAlreadyExists, CategoryNotExists...)
   ports/drivens/ Driven ports — the contracts the infrastructure must fulfill
 application/
@@ -62,8 +62,20 @@ Only **infrastructure** touches Prisma. The **domain** declares the contract
   (`productToResponse`).
 - `src/seed/mappers/` convert **seed data → save commands**.
 
-**`modules/shared/ui-state`** uses the same pattern for browser state: the UI
-consumes a driven port through a public barrel, never the Zustand store.
+**`modules/shared/ui-state`** uses the same pattern for browser state. It hosts
+the shared `Size` enum and two feature stores, each isolated behind a driven
+port:
+
+- **Sidebar** — `ForSidebarState` port, `HandleSidebarStateUseCase`,
+  `SidebarState/zustand-sidebar-adapter.ts` (collapsed + opening state).
+- **Cart** — `ForCartStore` port, `HandleProductsInCartUseCase`,
+  `CartState/zustand-cart-adapter.ts` (persisted with Zustand `persist`
+  middleware under the `shopping-cart` key). The adapter rehydrates plain
+  persisted DTOs back into `CartProduct` domain instances through a `merge`
+  function.
+
+The UI consumes these through the module factories, never the Zustand store
+directly.
 
 ### Data layer (Prisma 7)
 
@@ -90,7 +102,8 @@ follows a **Server-first** approach:
 
 - Pages and static containers are Server Components.
 - Interactive pieces are small Client Component "islands"
-  (e.g. `ProductSlideshow`, `QuantitySelector`, `SidebarWrapper`).
+  (e.g. `ProductSlideshow`, `QuantitySelector`, `SidebarWrapper`,
+  `TopMenuCartCount`, `CartItems`).
 
 ### Data flow: pages → actions → use case → adapter
 
@@ -108,6 +121,19 @@ src/app/(shop)/page.tsx
 The same pattern powers stock on the product page:
 `StockLabel` → `getStockByProductSlug` → use case → handler.
 
+The cart follows the same layering on the client: the product page adds items
+through `HandleProductsInCartUseCase` → `ForCartStore` port →
+`ZustandCartAdapter` (persisted to `localStorage`). `CartItems` and
+`TopMenuCartCount` read the store as the single source of truth via
+`useSyncExternalStore`:
+
+```
+ProductDetails (add to cart) / CartItems / TopMenuCartCount
+  └─ HandleProductsInCartUseCase (client use case)
+       └─ ForCartStore (driven port)
+            └─ ZustandCartAdapter (persist → localStorage "shopping-cart")
+```
+
 ### Screens (App Router)
 
 | Route                      | Description                                    |
@@ -116,7 +142,7 @@ The same pattern powers stock on the product page:
 | `/product/[slug]`          | Product detail (slideshow, size, qty, stock)   |
 | `/products`                | Products listing                               |
 | `/category/[id]`           | Category listing by gender (paged)             |
-| `/cart`                    | Cart with live totals                          |
+| `/cart`                    | Cart with live totals (persisted store)        |
 | `/checkout/address`        | Address form                                   |
 | `/checkout`                | Order review (verify order)                    |
 | `/orders`                  | Order list (demo data)                         |
@@ -283,8 +309,7 @@ teslo-shop/
 │   │   │   │   │   └── product-image-save-command.ts
 │   │   │   │   ├── gender.ts
 │   │   │   │   ├── product.ts
-│   │   │   │   ├── productImage.ts
-│   │   │   │   └── size.ts
+│   │   │   │   └── productImage.ts
 │   │   │   ├── error/
 │   │   │   │   ├── category-already-exists-exception.ts
 │   │   │   │   ├── category-not-exists-exception.ts
@@ -316,23 +341,34 @@ teslo-shop/
 │       └── ui-state/
 │           ├── index.ts
 │           ├── domain/
+│           │   ├── model/
+│           │   │   ├── cart-product.ts
+│           │   │   └── size.ts
 │           │   └── ports/
+│           │       ├── for-cart-store.ts
 │           │       └── for-sidebar-state.ts
 │           ├── application/
 │           │   └── usecases/
+│           │       ├── handle-products-in-cart-use-case.ts
 │           │       └── handle-sidebar-state-use-case.ts
 │           └── infrastructure/
 │               ├── adapters/
 │               │   └── out/
+│               │       ├── CartState/
+│               │       │   ├── cart-store.ts
+│               │       │   └── zustand-cart-adapter.ts
 │               │       └── SidebarState/
 │               │           ├── sidebar-store.ts
 │               │           └── zustand-sidebar-adapter.ts
 │               └── config/
 │                   └── factory/
+│                       ├── handle-products-in-cart-use-case-factory.ts
 │                       └── handle-sidebar-state-use-case-factory.ts
 ├── ui/
 │   ├── index.ts
 │   ├── components/
+│   │   ├── error-message/
+│   │   │   └── ErrorMessage.tsx
 │   │   ├── footer/
 │   │   │   └── Footer.tsx
 │   │   ├── not-found/
@@ -346,12 +382,16 @@ teslo-shop/
 │   │   │   └── Title.tsx
 │   │   └── top-menu/
 │   │       ├── TopMenu.tsx
+│   │       ├── TopMenuCartCount.tsx
 │   │       ├── OpenMenuButton.tsx
 │   │       └── ScrollShadow.tsx
 │   └── features/
 │       ├── cart/
 │       │   ├── index.ts
-│       │   └── CartItems.tsx
+│       │   ├── components/
+│       │   │   └── CartItems.tsx
+│       │   └── utils/
+│       │       └── currency-format.ts
 │       ├── checkout/
 │       │   ├── index.ts
 │       │   └── CheckoutItems.tsx
@@ -367,6 +407,11 @@ teslo-shop/
 │       │   ├── interfaces/
 │       │   │   ├── product.interface.ts
 │       │   │   └── response/       # UI response contracts
+│       │   │       ├── category-response.interface.ts
+│       │   │       ├── gender-reponse.type.ts
+│       │   │       ├── product-image-response.interface.ts
+│       │   │       ├── product-response.interface.ts
+│       │   │       └── size-response.type.ts
 │       │   ├── mappers/
 │       │   │   └── product.mapper.ts  # productToResponse (domain → UI)
 │       │   └── components/
@@ -435,7 +480,9 @@ teslo-shop/
   detail pages fetch through the use case; `PrismaProductsHandler` covers
   paging (`getAllProductsWithImages`, `getProductsByGender`), counts,
   by-slug lookups and stock. Seed populates the catalog for real.
-- Cart is a Client island with local state (no global store yet).
+- **Cart persists on the client**: Zustand `persist` under `shopping-cart`,
+  read by `CartItems`/`TopMenuCartCount` as the single source of truth.
+  Checkout has not been wired to it yet.
 - Auth pages are presentational stubs.
 - Orders/admin/checkout flows still render demo or placeholder data.
 - No automated tests yet (no test runner or suite configured).

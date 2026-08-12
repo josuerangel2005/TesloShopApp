@@ -3,15 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useSyncExternalStore } from "react";
-import { IoArrowBackOutline, IoCartOutline, IoTrashOutline } from "react-icons/io5";
+import {
+  IoArrowBackOutline,
+  IoCartOutline,
+  IoTrashOutline,
+} from "react-icons/io5";
 import { QuantitySelector } from "../../product";
 import { getHandleProductsInCartUseCase } from "../../../../modules/shared/ui-state/infrastructure/config/factory/handle-products-in-cart-use-case-factory";
 import { CartProduct } from "../../../../modules/shared/ui-state/domain/model/cart-product";
-
-const usd = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-});
+import { currencyFormat } from "../utils/currency-format";
 
 const TAX_RATE = 0.15;
 const EMPTY_CART: CartProduct[] = [];
@@ -83,90 +83,90 @@ export const CartItems = () => {
         </Link>
 
         <div className="flex flex-col gap-4">
-            {inCart.map((product) => (
-              <div
-                key={cartItemKey(product)}
-                className="flex gap-4 rounded-xl border border-slate-200 bg-white p-3 transition-shadow hover:shadow-md"
-              >
-                <Image
-                  src={`/products/${product.getImage()}`}
-                  alt={product.getTitle()}
-                  width={100}
-                  height={100}
-                  className="size-[100px] rounded-lg object-cover"
-                />
+          {inCart.map((product) => (
+            <div
+              key={cartItemKey(product)}
+              className="flex gap-4 rounded-xl border border-slate-200 bg-white p-3 transition-shadow hover:shadow-md"
+            >
+              <Image
+                src={`/products/${product.getImage()}`}
+                alt={product.getTitle()}
+                width={100}
+                height={100}
+                className="size-[100px] rounded-lg object-cover"
+              />
 
-                <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium text-slate-800">
-                        {product.getTitle()}
-                      </p>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {usd.format(product.getPrice())}
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => remove(product)}
-                      className="flex cursor-pointer items-center gap-1 whitespace-nowrap text-sm text-red-500 transition-colors hover:text-red-600 hover:underline"
-                    >
-                      <IoTrashOutline size={18} />
-                      Remover
-                    </button>
+              <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-slate-800">
+                      {product.getTitle()}
+                    </p>
+                    <p className="text-sm font-semibold text-slate-900">
+                      {currencyFormat(product.getPrice())}
+                    </p>
                   </div>
 
-                  <QuantitySelector
-                    quantity={product.getQuantity()}
-                    max={product.getInStock()}
-                    onQuantityChange={(quantity) => changeQty(product, quantity)}
-                  />
+                  <button
+                    type="button"
+                    onClick={() => remove(product)}
+                    className="flex cursor-pointer items-center gap-1 whitespace-nowrap text-sm text-red-500 transition-colors hover:text-red-600 hover:underline"
+                  >
+                    <IoTrashOutline size={18} />
+                    Remover
+                  </button>
                 </div>
+
+                <QuantitySelector
+                  quantity={product.getQuantity()}
+                  max={product.getInStock()}
+                  onQuantityChange={(quantity) => changeQty(product, quantity)}
+                />
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="h-fit rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-          <h2 className="text-2xl font-semibold text-slate-900">
-            Resumen de Orden
-          </h2>
+        <h2 className="text-2xl font-semibold text-slate-900">
+          Resumen de Orden
+        </h2>
 
-          <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">
-            <div className="flex items-center justify-between">
-              <span className="text-slate-600">No. Productos</span>
-              <span className="text-right font-medium text-slate-900">
-                {totalItems} {totalItems === 1 ? "artículo" : "artículos"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-600">Subtotal</span>
-              <span className="text-right font-medium text-slate-900">
-                {usd.format(subtotal)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-600">Impuestos (15%)</span>
-              <span className="text-right font-medium text-slate-900">
-                {usd.format(tax)}
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
-            <span className="text-lg font-semibold text-slate-900">Total</span>
-            <span className="text-right text-2xl font-bold text-slate-900">
-              {usd.format(total)}
+        <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">
+          <div className="flex items-center justify-between">
+            <span className="text-slate-600">No. Productos</span>
+            <span className="text-right font-medium text-slate-900">
+              {totalItems} {totalItems === 1 ? "artículo" : "artículos"}
             </span>
           </div>
+          <div className="flex items-center justify-between">
+            <span className="text-slate-600">Subtotal</span>
+            <span className="text-right font-medium text-slate-900">
+              {currencyFormat(subtotal)}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-slate-600">Impuestos (15%)</span>
+            <span className="text-right font-medium text-slate-900">
+              {currencyFormat(tax)}
+            </span>
+          </div>
+        </div>
 
-          <Link
-            href="/checkout/address"
-            className="btn-primary mt-6 w-full text-center"
-          >
-            Checkout
-          </Link>
+        <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
+          <span className="text-lg font-semibold text-slate-900">Total</span>
+          <span className="text-right text-2xl font-bold text-slate-900">
+            {currencyFormat(total)}
+          </span>
+        </div>
+
+        <Link
+          href="/checkout/address"
+          className="btn-primary mt-6 w-full text-center"
+        >
+          Checkout
+        </Link>
       </div>
     </div>
   );
