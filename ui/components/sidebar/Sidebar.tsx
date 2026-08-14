@@ -1,21 +1,18 @@
-import {
-  IoLogInOutline,
-  IoLogOutOutline,
-  IoPeopleOutline,
-  IoPersonOutline,
-  IoSearchOutline,
-  IoShareOutline,
-  IoTicketOutline,
-} from "react-icons/io5";
+import { IoSearchOutline } from "react-icons/io5";
 import { SidebarBackdrop } from "./SidebarBackdrop";
-import { SidebarCloseButton } from "./SidebarCloseButton";
-import Link from "next/link";
+import { MenuButtons } from "./MenuBottons";
 
 interface SidebarProps {
   hidden?: boolean;
+  isAuthenticated: boolean;
+  rol: string;
 }
 
-export const Sidebar = ({ hidden = false }: SidebarProps) => {
+export const Sidebar = ({
+  hidden = false,
+  isAuthenticated,
+  rol,
+}: SidebarProps) => {
   return (
     <div inert={hidden} aria-hidden={hidden}>
       <SidebarBackdrop hidden={hidden} />
@@ -29,8 +26,6 @@ export const Sidebar = ({ hidden = false }: SidebarProps) => {
           hidden ? "translate-x-full pointer-events-none" : "translate-x-0"
         }`}
       >
-        <SidebarCloseButton />
-
         {/* Input */}
         <div className="relative mt-14 flex items-center">
           <IoSearchOutline
@@ -45,63 +40,8 @@ export const Sidebar = ({ hidden = false }: SidebarProps) => {
         </div>
 
         {/* Menu */}
-        <Link
-          href={"/"}
-          className="flex items-center mt-10 p-2 hover:bg-gray-100 rounded transition-all"
-        >
-          <IoPersonOutline size={30} />
-          <span className="ml-5 text-xl">Perfil</span>
-        </Link>
 
-        <Link
-          href={"/"}
-          className="flex items-center mt-10 p-2 hover:bg-gray-100 rounded transition-all"
-        >
-          <IoTicketOutline size={30} />
-          <span className="ml-5 text-xl">Órdenes</span>
-        </Link>
-
-        <Link
-          href={"/"}
-          className="flex items-center mt-10 p-2 hover:bg-gray-100 rounded transition-all"
-        >
-          <IoLogInOutline size={30} />
-          <span className="ml-5 text-xl">Ingresar</span>
-        </Link>
-
-        <Link
-          href={"/"}
-          className="flex items-center mt-10 p-2 hover:bg-gray-100 rounded transition-all"
-        >
-          <IoLogOutOutline size={30} />
-          <span className="ml-5 text-xl">Salir</span>
-        </Link>
-
-        {/* Line Separator */}
-        <div className="w-full h-px bg-gray-200 my-10" />
-        <Link
-          href={"/"}
-          className="flex items-center mt-10 p-2 hover:bg-gray-100 rounded transition-all"
-        >
-          <IoShareOutline size={30} />
-          <span className="ml-5 text-xl">Products</span>
-        </Link>
-
-        <Link
-          href={"/"}
-          className="flex items-center mt-10 p-2 hover:bg-gray-100 rounded transition-all"
-        >
-          <IoTicketOutline size={30} />
-          <span className="ml-5 text-xl">Órdenes</span>
-        </Link>
-
-        <Link
-          href={"/"}
-          className="flex items-center mt-10 p-2 hover:bg-gray-100 rounded transition-all"
-        >
-          <IoPeopleOutline size={30} />
-          <span className="ml-5 text-xl">Usuarios</span>
-        </Link>
+        <MenuButtons isAuthenticated={isAuthenticated} rol={rol} />
       </nav>
 
       <style>{`

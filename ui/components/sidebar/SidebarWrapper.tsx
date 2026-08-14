@@ -4,7 +4,12 @@ import { useSyncExternalStore } from "react";
 import { getHandleSidebarStateUseCase } from "../../../modules/shared/ui-state";
 import { Sidebar } from "./Sidebar";
 
-export const SidebarWrapper = () => {
+interface Props {
+  isAuthenticated: boolean;
+  rol: string;
+}
+
+export const SidebarWrapper = ({ isAuthenticated, rol }: Props) => {
   const storeApi = getHandleSidebarStateUseCase();
 
   const isSidebarOpen = useSyncExternalStore(
@@ -13,5 +18,11 @@ export const SidebarWrapper = () => {
     () => false,
   );
 
-  return <Sidebar hidden={!isSidebarOpen} />;
+  return (
+    <Sidebar
+      hidden={!isSidebarOpen}
+      isAuthenticated={isAuthenticated}
+      rol={rol}
+    />
+  );
 };
