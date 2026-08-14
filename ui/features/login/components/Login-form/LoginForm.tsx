@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useFormState } from "react-dom";
+import { useActionState } from "react";
+import { IoAlertCircleOutline } from "react-icons/io5";
 import { authenticate } from "../../actions/login-action";
 
 interface Props {
@@ -9,10 +10,13 @@ interface Props {
 }
 
 export const LoginForm = ({ fieldClass }: Props) => {
-  const [state, dispatch] = useFormState(authenticate, undefined);
+  const [state, formAction, isPending] = useActionState(
+    authenticate,
+    undefined,
+  );
 
   return (
-    <form action={dispatch} className="flex flex-col gap-4">
+    <form action={formAction} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
         <label
           htmlFor="login-email"
@@ -27,6 +31,12 @@ export const LoginForm = ({ fieldClass }: Props) => {
           placeholder="tu@correo.com"
           className={fieldClass}
         />
+        {state?.fieldsErrors?.email && (
+          <p className="mt-1 flex items-center gap-1.5 text-sm text-red-600">
+            <IoAlertCircleOutline size={16} className="shrink-0" />
+            {state.fieldsErrors.email}
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -43,11 +53,28 @@ export const LoginForm = ({ fieldClass }: Props) => {
           placeholder="••••••••"
           className={fieldClass}
         />
+        {state?.fieldsErrors?.password && (
+          <p className="mt-1 flex items-center gap-1.5 text-sm text-red-600">
+            <IoAlertCircleOutline size={16} className="shrink-0" />
+            {state.fieldsErrors.password}
+          </p>
+        )}
       </div>
+
+      {state?.message && (
+        <div
+          role="alert"
+          className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
+          <IoAlertCircleOutline size={18} className="mt-0.5 shrink-0" />
+          <p className="font-medium">{state.message}</p>
+        </div>
+      )}
 
       <button
         type="submit"
-        className="btn-primary mt-2 w-full justify-center text-center"
+        className="btn-primary mt-2 w-full justify-center text-center disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={isPending}
       >
         Ingresar
       </button>

@@ -1,35 +1,59 @@
 "use server";
-
-import { EmptyCredentialExcepion } from "../../../../modules/auth/domain/error/empty-credentials-exception";
 import { InvalidCredentialsException } from "../../../../modules/auth/domain/error/invalid-credentials-exception";
 import { AuthException } from "../../../../modules/auth/domain/error/auth-exception";
 import { LoginCredential } from "../../../../modules/auth/domain/model/login-credentials";
 import { getHandleAuthUseCase } from "../../../../modules/auth";
 import { redirect } from "next/navigation";
+import { getValidateUserRegistrationUseCase } from "../../../../modules/shared/validation";
+
+export interface LoginState {
+  message?: string;
+  fieldsErrors: {
+    email?: string;
+    password?: string;
+  };
+}
 
 export async function authenticate(
-  prevState: string | undefined,
+  prevState: LoginState | undefined,
   formData: FormData,
-): Promise<string> {
+): Promise<LoginState> {
   const handleAuthUseCase = getHandleAuthUseCase();
-
   const email: string = formData.get("email")?.toString().trim() ?? "";
   const password: string = formData.get("password")?.toString().trim() ?? "";
 
-  try {
-    if (!email || !password) throw new EmptyCredentialExcepion();
+  const validateUserRegistrationUseCase = getValidateUserRegistrationUseCase();
 
+  if (
+    validateUserRegistrationUseCase.validateEmail(email) ||
+    validateUserRegistrationUseCase.validatePassword(password)
+  )
+    return {
+      fieldsErrors: {
+        email: validateUserRegistrationUseCase.validateEmail(email),
+        password: validateUserRegistrationUseCase.validatePassword(password),
+      },
+    };
+  try {
     await handleAuthUseCase.login(new LoginCredential(email, password));
   } catch (error) {
-    if (error instanceof EmptyCredentialExcepion)
-      return "Complete todos los campos.";
-    if (error instanceof InvalidCredentialsException)
-      return "Correo o contraseña incorrectos.";
-    if (error instanceof AuthException)
-      return "Error al iniciar sesión. Intente nuevamente.";
-
+    if (error instanceof InvalidCredentialsException) {
+      return {
+        fieldsErrors: {},
+        message: "Correo o contraseña incorrectos.",
+      };
+    }
+    if (error instanceof AuthException) {
+      return {
+        fieldsErrors: {},
+        message: "Error al iniciar sesión. Intente nuevamente.",
+      };
+    }
     console.error("Login error:", error);
-    return "Ocurrió un error inesperado. Intente nuevamente.";
+    return {
+      fieldsErrors: {},
+      message: "Ocurrió un error inesperado. Intente nuevamente.",
+    };
   }
 
   redirect("/");

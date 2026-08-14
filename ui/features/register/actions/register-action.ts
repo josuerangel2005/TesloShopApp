@@ -9,15 +9,34 @@ import { getHandleAuthUseCase } from "../../../../modules/auth";
 import { getEmailSenderHandlerUseCase, verificationEmail } from "../../../../modules/email";
 import { ImageUpload } from "../../../../modules/shared/ui-state/domain/model/image-upload";
 import { getHandleUploadImageUseCase } from "../../../../modules/shared/ui-state/infrastructure/config/factory/handle-upload-image-use-case-factory";
+import { getValidateUserRegistrationUseCase } from "../../../../modules/shared/validation";
+
+export interface RegisterState {
+  fieldErrors?: {
+    name?: string;
+    email?: string;
+    password?: string;
+  };
+  serverError?: string;
+}
 
 export async function register(
-  _prevState: string | undefined,
+  _prevState: RegisterState,
   formData: FormData,
-): Promise<string> {
+): Promise<RegisterState> {
   const name: string = formData.get("name")?.toString().trim() ?? "";
   const email: string = formData.get("email")?.toString().trim() ?? "";
   const password: string = formData.get("password")?.toString().trim() ?? "";
   const imageFile = formData.get("image") as File | null;
+
+  const validation = getValidateUserRegistrationUseCase().validate(
+    name,
+    email,
+    password,
+  );
+  if (!validation.success) {
+    return { fieldErrors: validation.fieldErrors };
+  }
 
   try {
     // 1. Imagen opcional
@@ -49,9 +68,9 @@ export async function register(
     redirect("/auth/check-email");
   } catch (error) {
     if (error instanceof UserAlreadyExistsException)
-      return "Ya existe una cuenta con ese correo.";
+      return { serverError: "Ya existe una cuenta con ese correo." };
 
     console.error("Register error:", error);
-    return "Ocurrió un error al registrar la cuenta.";
+    return { serverError: "Ocurrió un error al registrar la cuenta." };
   }
 }

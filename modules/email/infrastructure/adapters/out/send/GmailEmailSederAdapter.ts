@@ -10,7 +10,7 @@ export class GmailEmailSenderAppAdapter implements ForEmailSender {
       service: "gmail",
       auth: {
         user: process.env.GMAIL_USER,
-        pass: process.env.GAMIL_APP_PASSWORD,
+        pass: process.env.GMAIL_APP_PASSWORD,
       },
     });
   }

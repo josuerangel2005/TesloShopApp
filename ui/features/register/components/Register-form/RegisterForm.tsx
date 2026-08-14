@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useActionState } from "react";
 import {
   IoCloseOutline,
   IoImageOutline,
   IoPersonCircleOutline,
 } from "react-icons/io5";
+import { register } from "../../actions/register-action";
+import { ErrorMessage } from "../../../../components/error-message/ErrorMessage";
 
 interface Props {
   fieldClass: string;
@@ -15,6 +17,7 @@ interface Props {
 export const RegisterForm = ({ fieldClass }: Props) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [state, formAction, isPending] = useActionState(register, {});
 
   useEffect(() => {
     return () => {
@@ -37,7 +40,7 @@ export const RegisterForm = ({ fieldClass }: Props) => {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <form action={formAction} className="flex flex-col gap-4">
       {/* Avatar con vista previa */}
       <div className="mb-1 flex flex-col items-center gap-3">
         <div className="relative">
@@ -96,10 +99,14 @@ export const RegisterForm = ({ fieldClass }: Props) => {
         </label>
         <input
           id="signup-name"
+          name="name"
           type="text"
           placeholder="Juan Pérez"
           className={fieldClass}
         />
+        {state.fieldErrors?.name && (
+          <ErrorMessage message={state.fieldErrors.name} />
+        )}
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -111,10 +118,14 @@ export const RegisterForm = ({ fieldClass }: Props) => {
         </label>
         <input
           id="signup-email"
+          name="email"
           type="email"
           placeholder="tu@correo.com"
           className={fieldClass}
         />
+        {state.fieldErrors?.email && (
+          <ErrorMessage message={state.fieldErrors.email} />
+        )}
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -126,14 +137,24 @@ export const RegisterForm = ({ fieldClass }: Props) => {
         </label>
         <input
           id="signup-password"
+          name="password"
           type="password"
           placeholder="••••••••"
           className={fieldClass}
         />
+        {state.fieldErrors?.password && (
+          <ErrorMessage message={state.fieldErrors.password} />
+        )}
       </div>
 
-      <button className="btn-primary mt-2 w-full justify-center text-center">
-        Crear Cuenta
+      {state.serverError && <ErrorMessage message={state.serverError} />}
+
+      <button
+        type="submit"
+        className="btn-primary mt-2 w-full justify-center text-center disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={isPending}
+      >
+        {isPending ? "Creando cuenta..." : "Crear Cuenta"}
       </button>
 
       {/* Divisor */}
@@ -151,6 +172,6 @@ export const RegisterForm = ({ fieldClass }: Props) => {
       >
         Iniciar Sesión
       </Link>
-    </div>
+    </form>
   );
 };
