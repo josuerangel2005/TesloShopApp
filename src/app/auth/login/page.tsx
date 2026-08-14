@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { titleFont } from "@/config/fonts";
-import { LoginForm } from "../../../../ui/features/login/components/Login-form/LoginForm";
+import { LoginForm } from "../../../../ui";
 
 export const metadata: Metadata = {
   title: "Iniciar sesión",

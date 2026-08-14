@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { titleFont } from "@/config/fonts";
-import { VerifyEmailForm } from "../../../../ui/features/verify-email/components/Verify-email-form/VerifyEmailForm";
+import { VerifyEmailForm } from "../../../../ui";
 
 export const metadata: Metadata = {
   title: "Verificar email",

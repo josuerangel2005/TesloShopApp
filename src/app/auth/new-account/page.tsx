@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { titleFont } from "@/config/fonts";
-import { RegisterForm } from "../../../../ui/features/register/components/Register-form/RegisterForm";
+import { RegisterForm } from "../../../../ui";
 
 export const metadata: Metadata = {
   title: "Crear cuenta",

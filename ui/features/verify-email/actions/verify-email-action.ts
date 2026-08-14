@@ -2,7 +2,7 @@
 
 import { VerificationTokenExpiredException } from "../../../../modules/auth/domain/error/verification-token-expired-exception";
 import { VerificationTokenInvalidException } from "../../../../modules/auth/domain/error/verification-token-invalid-exception";
-import { getHandleAuthUseCase } from "../../../../modules/auth/infrastructure/config/factory/handle-auth-use-case-factory";
+import { getHandleAuthUseCase } from "../../../../modules/auth";
 
 export async function verifyEmail(
   prevState: string | undefined,

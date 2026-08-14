@@ -5,9 +5,8 @@ import { redirect } from "next/navigation";
 import { UserAlreadyExistsException } from "../../../../modules/auth/domain/error/user-already-exists-exception";
 import { UserSaveCommand } from "../../../../modules/auth/domain/model/commands/user-save-command";
 import { Role } from "../../../../modules/auth/domain/model/role";
-import { getHandleAuthUseCase } from "../../../../modules/auth/infrastructure/config/factory/handle-auth-use-case-factory";
-import { getEmailSenderHandlerUseCase } from "../../../../modules/email/infrastructure/config/factory/email-sender-handler-use-case-factory";
-import { verificationEmail } from "../../../../modules/email/infrastructure/templates/verification-email";
+import { getHandleAuthUseCase } from "../../../../modules/auth";
+import { getEmailSenderHandlerUseCase, verificationEmail } from "../../../../modules/email";
 import { ImageUpload } from "../../../../modules/shared/ui-state/domain/model/image-upload";
 import { getHandleUploadImageUseCase } from "../../../../modules/shared/ui-state/infrastructure/config/factory/handle-upload-image-use-case-factory";
 

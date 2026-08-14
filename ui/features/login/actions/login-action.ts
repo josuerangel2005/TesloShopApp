@@ -4,7 +4,7 @@ import { EmptyCredentialExcepion } from "../../../../modules/auth/domain/error/e
 import { InvalidCredentialsException } from "../../../../modules/auth/domain/error/invalid-credentials-exception";
 import { AuthException } from "../../../../modules/auth/domain/error/auth-exception";
 import { LoginCredential } from "../../../../modules/auth/domain/model/login-credentials";
-import { getHandleAuthUseCase } from "../../../../modules/auth/infrastructure/config/factory/handle-auth-use-case-factory";
+import { getHandleAuthUseCase } from "../../../../modules/auth";
 import { redirect } from "next/navigation";
 
 export async function authenticate(
