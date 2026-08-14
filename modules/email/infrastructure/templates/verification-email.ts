@@ -54,7 +54,7 @@ export function verificationEmail(to: string, link: string): EmailMessage {
 
                   <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 0 0 24px;" />
                   <p style="margin: 0; color: #475569; font-size: 13px; line-height: 1.5;">
-                    Si no creaste esta cuenta, podés ignorar este correo. El enlace expira en 24 horas.
+                    Si no creaste esta cuenta, ignore este correo. El enlace expira en 24 horas.
                   </p>
                 </td>
               </tr>
