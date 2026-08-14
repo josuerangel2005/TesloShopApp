@@ -6,7 +6,10 @@ import { UserAlreadyExistsException } from "../../../../modules/auth/domain/erro
 import { UserSaveCommand } from "../../../../modules/auth/domain/model/commands/user-save-command";
 import { Role } from "../../../../modules/auth/domain/model/role";
 import { getHandleAuthUseCase } from "../../../../modules/auth";
-import { getEmailSenderHandlerUseCase, verificationEmail } from "../../../../modules/email";
+import {
+  getEmailSenderHandlerUseCase,
+  verificationEmail,
+} from "../../../../modules/email";
 import { ImageUpload } from "../../../../modules/shared/ui-state/domain/model/image-upload";
 import { getHandleUploadImageUseCase } from "../../../../modules/shared/ui-state/infrastructure/config/factory/handle-upload-image-use-case-factory";
 import { getValidateUserRegistrationUseCase } from "../../../../modules/shared/validation";
@@ -63,9 +66,6 @@ export async function register(
     // 4. Enviar el correo de verificación
     const link = `${process.env.NEXTAUTH_URL ?? ""}/auth/verify-email?token=${token}`;
     await getEmailSenderHandlerUseCase().send(verificationEmail(email, link));
-
-    // 5. Redirigir
-    redirect("/auth/check-email");
   } catch (error) {
     if (error instanceof UserAlreadyExistsException)
       return { serverError: "Ya existe una cuenta con ese correo." };
@@ -73,4 +73,5 @@ export async function register(
     console.error("Register error:", error);
     return { serverError: "Ocurrió un error al registrar la cuenta." };
   }
+  redirect("/auth/login?registered=1");
 }

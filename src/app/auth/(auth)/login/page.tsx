@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { titleFont } from "@/config/fonts";
-import { LoginForm } from "../../../../ui";
+import { LoginForm } from "../../../../../ui";
 
 export const metadata: Metadata = {
   title: "Iniciar sesión",
@@ -11,7 +10,13 @@ export const metadata: Metadata = {
 const fieldClass =
   "rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 transition-colors placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
 
-export default function () {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ registered?: string }>;
+}) {
+  const { registered } = await searchParams;
+
   return (
     <div className="auth-card flex w-full flex-col">
       <div className="mb-8 text-center">
@@ -26,7 +31,7 @@ export default function () {
         </p>
       </div>
 
-      <LoginForm fieldClass={fieldClass} />
+      <LoginForm fieldClass={fieldClass} registered={registered === "1"} />
 
       <style>{`
         .auth-card {

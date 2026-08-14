@@ -1,19 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useEffect, useRef, useActionState } from "react";
 import { IoAlertCircleOutline } from "react-icons/io5";
 import { authenticate } from "../../actions/login-action";
+import { getShowMessageUseCase } from "../../../../../modules/shared/ui-state";
 
 interface Props {
   fieldClass: string;
+  registered?: boolean;
 }
 
-export const LoginForm = ({ fieldClass }: Props) => {
+export const LoginForm = ({ fieldClass, registered }: Props) => {
   const [state, formAction, isPending] = useActionState(
     authenticate,
     undefined,
   );
+  const showedRegisteredToast = useRef(false);
+
+  useEffect(() => {
+    if (registered && !showedRegisteredToast.current) {
+      showedRegisteredToast.current = true;
+      getShowMessageUseCase().show(
+        "Tu cuenta fue creada. Revisá tu correo para activarla.",
+        "success",
+      );
+    }
+  }, [registered]);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">

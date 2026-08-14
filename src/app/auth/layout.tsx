@@ -1,7 +1,11 @@
 import type { ReactNode } from "react";
 import AuthHero from "./auth-hero";
 
-export default function AuthLayout({ children }: { children: ReactNode }) {
+export default function AuthLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   return (
     <main className="min-h-screen bg-slate-50 md:grid md:grid-cols-2">
       <AuthHero />
