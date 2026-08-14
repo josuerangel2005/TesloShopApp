@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { titleFont } from "@/config/fonts";
+import { RegisterForm } from "../../../../ui/features/register/components/Register-form/RegisterForm";
 
 export const metadata: Metadata = {
   title: "Crear cuenta",
@@ -12,7 +12,7 @@ const fieldClass =
 
 export default function () {
   return (
-    <div className="auth-card flex w-full flex-col pt-10">
+    <div className="auth-card flex w-full flex-col">
       <div className="mb-8 text-center">
         <p
           className={`${titleFont.className} text-3xl font-bold text-slate-800`}
@@ -25,72 +25,7 @@ export default function () {
         </p>
       </div>
 
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="signup-name"
-            className="text-sm font-medium text-slate-700"
-          >
-            Nombre Completo
-          </label>
-          <input
-            id="signup-name"
-            type="text"
-            placeholder="Juan Pérez"
-            className={fieldClass}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="signup-email"
-            className="text-sm font-medium text-slate-700"
-          >
-            Correo electrónico
-          </label>
-          <input
-            id="signup-email"
-            type="email"
-            placeholder="tu@correo.com"
-            className={fieldClass}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="signup-password"
-            className="text-sm font-medium text-slate-700"
-          >
-            Contraseña
-          </label>
-          <input
-            id="signup-password"
-            type="password"
-            placeholder="••••••••"
-            className={fieldClass}
-          />
-        </div>
-
-        <button className="btn-primary mt-2 w-full justify-center text-center">
-          Crear Cuenta
-        </button>
-
-        {/* Divisor */}
-        <div className="my-2 flex items-center gap-3">
-          <div className="h-px flex-1 bg-slate-200" />
-          <span className="text-xs uppercase tracking-wider text-slate-400">
-            O
-          </span>
-          <div className="h-px flex-1 bg-slate-200" />
-        </div>
-
-        <Link
-          href="/auth/login"
-          className="btn-secondary w-full justify-center text-center"
-        >
-          Iniciar Sesión
-        </Link>
-      </div>
+      <RegisterForm fieldClass={fieldClass} />
 
       <style>{`
         .auth-card {

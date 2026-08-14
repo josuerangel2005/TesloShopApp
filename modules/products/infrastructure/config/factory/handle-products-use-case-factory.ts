@@ -1,5 +1,5 @@
 import { HandleProductsUseCase } from "../../../application/usecases/handle-products-use-case";
-import { prisma } from "../../adapters/out/HandleProducts/persistence/prisma/prisma";
+import { prisma } from "../../../../shared/ui-state/infrastructure/adapters/out/persistence/prisma/prisma";
 import { PrismaProductsHandler } from "../../adapters/out/HandleProducts/prisma-products-handler";
 
 const prismaProductssHandler = new PrismaProductsHandler(prisma);

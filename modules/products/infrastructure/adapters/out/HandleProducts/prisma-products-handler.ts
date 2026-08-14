@@ -2,7 +2,7 @@ import { Gender, Prisma } from "@/generated/prisma/client";
 import { Category } from "../../../../domain/model/category";
 import { CategorySaveCommand } from "../../../../domain/model/commands/category-save-command";
 import { ForHandleProducts } from "../../../../domain/ports/drivens/for-handle-products";
-import { prisma } from "./persistence/prisma/prisma";
+import { prisma } from "../../../../../shared/ui-state/infrastructure/adapters/out/persistence/prisma/prisma";
 import { CategoryNotExistsException } from "../../../../domain/error/category-not-exists-exception";
 import { CategoryAlreadyExistsException } from "../../../../domain/error/category-already-exists-exception";
 import { ProductsPersistenceException } from "../../../../domain/error/products-persistence-exception";
