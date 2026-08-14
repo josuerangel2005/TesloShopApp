@@ -11,6 +11,7 @@ import { UserPersistenceException } from "../../../../domain/error/user-persiste
 import { toUserDomainMapper } from "./mappers/toUserDomainMapper";
 import { UserAlreadyExistsException } from "../../../../domain/error/user-already-exists-exception";
 import { VerificationTokenInvalidException } from "../../../../domain/error/verification-token-invalid-exception";
+import { UserSeedSaveCommand } from "../../../../domain/model/commands/user-seed-save-command";
 
 export class PrismaUserHandler implements ForAuth {
   private readonly prismaClient: typeof prisma;
@@ -172,6 +173,44 @@ export class PrismaUserHandler implements ForAuth {
         throw new VerificationTokenInvalidException();
       throw new UserPersistenceException(
         `Failed to verify email: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  async saveAllUsersSeed(users: UserSeedSaveCommand[]): Promise<void> {
+    try {
+      await this.prismaClient.user.createMany({
+        data: users.map((user) => ({
+          name: user.getName(),
+          email: user.getEmail(),
+          password: user.getPassword(),
+          role: user.getRole().toString() as Role,
+          image: user.getImage(),
+          emailVerified: user.getEmailVerified(),
+          emailVerificationToken: user.getEmailVerificationToken(),
+          emailVerificationExpires: user.getEmailVerificationExpires(),
+        })),
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      )
+        throw new UserAlreadyExistsException(
+          users.map((user) => user.getName()).join(", "),
+        );
+      throw new UserPersistenceException(
+        `Failed to save categories: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  async deleteAllUsers(): Promise<void> {
+    try {
+      await this.prismaClient.user.deleteMany();
+    } catch (error) {
+      throw new UserPersistenceException(
+        `Failed to save categories: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }

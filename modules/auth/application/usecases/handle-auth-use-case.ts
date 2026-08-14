@@ -6,6 +6,7 @@ import { ForAuth } from "../../domain/ports/driven/for-auth";
 import { ForAuthSession } from "../../domain/ports/driven/for-auth-session";
 import { VerificationTokenExpiredException } from "../../domain/error/verification-token-expired-exception";
 import { VerificationTokenInvalidException } from "../../domain/error/verification-token-invalid-exception";
+import { UserSeedSaveCommand } from "../../domain/model/commands/user-seed-save-command";
 
 export class HandleAuthUseCase {
   private readonly forAuthSession: ForAuthSession;
@@ -62,5 +63,14 @@ export class HandleAuthUseCase {
       throw new VerificationTokenExpiredException();
 
     return this.forAuth.verifyEmail(token);
+  }
+
+  //seed
+  public saveAllUsersSeed(users: UserSeedSaveCommand[]): Promise<void> {
+    return this.forAuth.saveAllUsersSeed(users);
+  }
+
+  public deleteAllUsers(): Promise<void> {
+    return this.forAuth.deleteAllUsers();
   }
 }

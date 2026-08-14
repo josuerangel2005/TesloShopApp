@@ -1,4 +1,5 @@
 import { UserSaveCommand } from "../../model/commands/user-save-command";
+import { UserSeedSaveCommand } from "../../model/commands/user-seed-save-command";
 import { User } from "../../model/user";
 
 export interface ForAuth {
@@ -12,4 +13,8 @@ export interface ForAuth {
     expiresAt: Date,
   ) => Promise<void>;
   verifyEmail: (token: string) => Promise<User>;
+
+  //for seed
+  saveAllUsersSeed: (users: UserSeedSaveCommand[]) => Promise<void>;
+  deleteAllUsers: () => Promise<void>;
 }

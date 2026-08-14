@@ -1,7 +1,60 @@
 import { SeedData } from "../../ui/features/product";
+import { Role } from "../../modules/auth/domain/model/role";
 
 export const initialData: SeedData = {
   categories: ["shirts", "pants", "hoodies", "hats"],
+  users: [
+    {
+      name: "Admin Teslo",
+      email: "admin@teslo.shop",
+      password: "$2b$10$qkHgrnognGr30k8CNlRmQei0TfUwpwLDzzFDYZSkrK6GLx1YkVS9K",
+      role: Role.admin,
+      image: "",
+      emailVerified: new Date(),
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
+    },
+    {
+      name: "Juan Pérez",
+      email: "juan.perez@teslo.shop",
+      password: "$2b$10$qkHgrnognGr30k8CNlRmQei0TfUwpwLDzzFDYZSkrK6GLx1YkVS9K",
+      role: Role.user,
+      image: "",
+      emailVerified: new Date(),
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
+    },
+    {
+      name: "María Gómez",
+      email: "maria.gomez@teslo.shop",
+      password: "$2b$10$qkHgrnognGr30k8CNlRmQei0TfUwpwLDzzFDYZSkrK6GLx1YkVS9K",
+      role: Role.user,
+      image: "",
+      emailVerified: null,
+      emailVerificationToken: "8f4b2c1e9a7d4f6b3c5a2e8d1f7b4c6a",
+      emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    },
+    {
+      name: "Carlos Rodríguez",
+      email: "carlos.rodriguez@teslo.shop",
+      password: "$2b$10$qkHgrnognGr30k8CNlRmQei0TfUwpwLDzzFDYZSkrK6GLx1YkVS9K",
+      role: Role.user,
+      image: "",
+      emailVerified: null,
+      emailVerificationToken: "3a9c8d5e7f1b4a2c6e8d0f5b7a3c9e1f",
+      emailVerificationExpires: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+    },
+    {
+      name: "Lucía Fernández",
+      email: "lucia.fernandez@teslo.shop",
+      password: "$2b$10$qkHgrnognGr30k8CNlRmQei0TfUwpwLDzzFDYZSkrK6GLx1YkVS9K",
+      role: Role.admin,
+      image: "",
+      emailVerified: null,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
+    },
+  ],
   products: [
     {
       description:
