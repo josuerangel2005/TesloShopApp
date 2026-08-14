@@ -5,6 +5,7 @@ import { LoginCredential } from "../../../../modules/auth/domain/model/login-cre
 import { getHandleAuthUseCase } from "../../../../modules/auth";
 import { redirect } from "next/navigation";
 import { getValidateUserRegistrationUseCase } from "../../../../modules/shared/validation";
+import { EmptyCredentialExcepion } from "../../../../modules/auth/domain/error/empty-credentials-exception";
 
 export interface LoginState {
   message?: string;
@@ -22,25 +23,21 @@ export async function authenticate(
   const email: string = formData.get("email")?.toString().trim() ?? "";
   const password: string = formData.get("password")?.toString().trim() ?? "";
 
-  const validateUserRegistrationUseCase = getValidateUserRegistrationUseCase();
-
-  if (
-    validateUserRegistrationUseCase.validateEmail(email) ||
-    validateUserRegistrationUseCase.validatePassword(password)
-  )
-    return {
-      fieldsErrors: {
-        email: validateUserRegistrationUseCase.validateEmail(email),
-        password: validateUserRegistrationUseCase.validatePassword(password),
-      },
-    };
   try {
+    if (!email || !password) throw new EmptyCredentialExcepion();
+
     await handleAuthUseCase.login(new LoginCredential(email, password));
   } catch (error) {
     if (error instanceof InvalidCredentialsException) {
       return {
         fieldsErrors: {},
         message: "Correo o contraseña incorrectos.",
+      };
+    }
+    if (error instanceof EmptyCredentialExcepion) {
+      return {
+        fieldsErrors: {},
+        message: "Debe completar los campos",
       };
     }
     if (error instanceof AuthException) {
