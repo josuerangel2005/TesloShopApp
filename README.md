@@ -1,293 +1,378 @@
 # Teslo Shop
 
-E-commerce demo built with the modern Next.js stack. It serves as a learning
-project for App Router, React Server Components, strict TypeScript, Tailwind
-CSS v4, Prisma ORM, and a hexagonal (Ports & Adapters) architecture.
+Proyecto de e-commerce de aprendizaje construido con el stack moderno de
+Next.js. Sirve como ejemplo práctico de App Router, React Server Components,
+TypeScript estricto, Tailwind CSS v4, Prisma ORM y una arquitectura hexagonal
+(Ports & Adapters).
 
 ## Stack
 
-| Layer      | Tech                                                       |
-| ---------- | ---------------------------------------------------------- |
-| Framework  | [Next.js 16.3](https://nextjs.org) (App Router, Turbopack) |
-| UI         | React 19, React Server Components + Client Islands         |
-| Styling    | Tailwind CSS v4 (`@theme` design tokens)                   |
-| State      | Zustand 5 (isolated behind an adapter)                     |
-| Data       | Prisma ORM 7 (`@prisma/adapter-pg` + `pg`), PostgreSQL     |
-| Validation | Zod 4                                                      |
-| Carousel   | Swiper 14                                                  |
-| Icons      | react-icons (`io5`)                                        |
-| Language   | TypeScript strict                                          |
+| Capa        | Tecnología                                                  |
+| ----------- | ----------------------------------------------------------- |
+| Framework   | [Next.js 16.3](https://nextjs.org) (App Router, Turbopack)  |
+| UI          | React 19, React Server Components + Client Islands          |
+| Estilos     | Tailwind CSS v4 (design tokens con `@theme`)                |
+| Estado      | Zustand 5 (aislado detrás de un adaptador)                  |
+| Datos       | Prisma ORM 7 (`@prisma/adapter-pg` + `pg`), PostgreSQL      |
+| Autenticación | NextAuth v5 (beta) + bcryptjs                             |
+| Email       | Nodemailer (Gmail SMTP)                                     |
+| Imágenes    | Cloudinary SDK v2 (upload de avatares)                      |
+| Validación  | Zod 4                                                       |
+| Carrusel    | Swiper 14                                                   |
+| Iconos      | react-icons (`io5`)                                         |
+| Lenguaje    | TypeScript estricto                                         |
 
-## Architecture
+## Arquitectura
 
-The project follows a **hexagonal (Ports & Adapters)** layout to keep UI, the
-domain core, and infrastructure decoupled. Dependency arrows always point
-inward: `infrastructure → application → domain`.
+El proyecto sigue un diseño **hexagonal (Ports & Adapters)** para mantener la
+UI, el núcleo de dominio y la infraestructura desacoplados. Las dependencias
+apuntan siempre hacia adentro: `infrastructure → application → domain`.
 
 ```
-modules/    Domain core — entities, ports, use cases, adapters
-ui/         Internal UI library — components + feature modules (barrels)
-src/        Next.js application — routes (App Router)
+modules/    Núcleo de dominio — entidades, puertos, casos de uso, adaptadores
+ui/         Librería interna de UI — componentes + módulos de feature (barrels)
+src/        Aplicación Next.js — rutas (App Router)
 ```
 
-### `modules/` — the domain core
+### `modules/` — el núcleo de dominio
 
-| Module                    | Purpose                                                              |
-| ------------------------- | -------------------------------------------------------------------- |
-| `modules/products`        | Product domain: entities, driven port, use case, Prisma adapter      |
-| `modules/shared/ui-state` | Shared UI state (sidebar + cart + `Size`): Zustand behind ports      |
+| Módulo                    | Propósito                                                        |
+| ------------------------- | ---------------------------------------------------------------- |
+| `modules/products`        | Dominio de productos: entidades, puerto, caso de uso, adaptador  |
+| `modules/auth`            | Autenticación: credenciales, registro, verificación de email     |
+| `modules/email`           | Envío de correos: puerto `ForEmailSender`, adaptador Gmail       |
+| `modules/shared/ui-state` | Estado de UI compartido (sidebar + carrito + `Size`)             |
+| `modules/orders`          | (en preparación)                                                 |
 
-**`modules/products`** follows the hexagonal layout:
+**`modules/products`** sigue el esquema hexagonal:
 
 ```
 domain/
-  model/        Entities (Product, Category, ProductImage, Gender)
-  error/        Domain exceptions (ProductAlreadyExists, CategoryNotExists...)
-  ports/drivens/ Driven ports — the contracts the infrastructure must fulfill
+  model/        Entidades (Product, Category, ProductImage, Gender)
+  error/        Excepciones de dominio (ProductAlreadyExists, CategoryNotExists...)
+  ports/driven/ Puertos manejados — los contratos que la infraestructura debe cumplir
 application/
-  usecases/     Orchestration (HandleProductsUseCase)
+  usecases/     Orquestación (HandleProductsUseCase)
 infrastructure/
-  adapters/out/ Prisma adapter (PrismaProductsHandler → implements port)
-  config/       Factories and wiring
+  adapters/out/ Adaptador Prisma (PrismaProductsHandler → implementa el puerto)
+  config/       Fábricas y cableado
 ```
 
-Only **infrastructure** touches Prisma. The **domain** declares the contract
-(`ForHandleProducts`), the **application** orchestrates it
-(`HandleProductsUseCase`), and the **adapter** implements it
-(`PrismaProductsHandler`). Each layer maps its own data:
+Solo la **infraestructura** toca Prisma. El **dominio** declara el contrato
+(`ForHandleProducts`), la **aplicación** lo orquesta
+(`HandleProductsUseCase`) y el **adaptador** lo implementa
+(`PrismaProductsHandler`). Cada capa mapea sus propios datos:
 
-- Adapter `utils/` mappers convert **rows → domain** (with `include`
-  relations).
-- UI `mappers/` convert **domain → response** contracts
+- Los mappers `utils/` del adaptador convierten **filas → dominio** (con
+  `include` de relaciones).
+- Los mappers de UI convierten **dominio → contratos de respuesta**
   (`productToResponse`).
-- `src/seed/mappers/` convert **seed data → save commands**.
+- Los mappers de `src/seed/` convierten **datos de seed → comandos de guardado**.
 
-**`modules/shared/ui-state`** uses the same pattern for browser state. It hosts
-the shared `Size` enum and two feature stores, each isolated behind a driven
-port:
+**`modules/auth`** cubre el flujo completo de autenticación:
 
-- **Sidebar** — `ForSidebarState` port, `HandleSidebarStateUseCase`,
-  `SidebarState/zustand-sidebar-adapter.ts` (collapsed + opening state).
-- **Cart** — `ForCartStore` port, `HandleProductsInCartUseCase`,
-  `CartState/zustand-cart-adapter.ts` (persisted with Zustand `persist`
-  middleware under the `shopping-cart` key). The adapter rehydrates plain
-  persisted DTOs back into `CartProduct` domain instances through a `merge`
-  function.
+- **Dominio**: `User` (con `emailVerified` y token de verificación), `Role`,
+  `LoginCredential`, `UserSaveCommand`, excepciones de dominio
+  (`InvalidCredentialsException`, `UserAlreadyExistsException`,
+  `VerificationTokenInvalidException`, `VerificationTokenExpiredException`...).
+- **Puertos**: `ForAuth` (credenciales, registro, token de verificación,
+  verificación de email) y `ForAuthSession` (sesión con NextAuth).
+- **Aplicación**: `HandleAuthUseCase` — `login`, `register`,
+  `saveEmailVerification` y `verifyEmail` (con validación encadenada:
+  token inválido → ya verificado → expirado → recién marca `emailVerified`).
+- **Infraestructura**: `PrismaUserHandler` (persistencia en PostgreSQL) y
+  `NextAuthHandler` (integración con NextAuth v5).
 
-The UI consumes these through the module factories, never the Zustand store
-directly.
-
-### Data layer (Prisma 7)
-
-Connection configuration follows the Prisma 7 conventions:
+**`modules/email`** es el hexágono de envío de correos, desacoplado del de
+auth:
 
 ```
-prisma.config.ts                                            ← tooling (root)
-modules/products/infrastructure/adapters/out/
-  HandleProducts/persistence/prisma/schema.prisma           ← schema
-  HandleProducts/persistence/prisma/migrations/             ← (pending)
-  HandleProducts/prisma-products-handler.ts                 ← adapter
+domain/
+  model/        EmailMessage (to, subject, html)
+  ports/driven/ ForEmailSender (send)
+application/
+  usecases/     EmailSenderHandlerUseCase
+infrastructure/
+  adapters/out/ GmailEmailSenderAppAdapter (Nodemailer + SMTP de Gmail)
+  templates/    verificationEmail() — template HTML con estilo inline
+  config/       Fábrica (getEmailSenderHandlerUseCase)
 ```
 
-- The **URL for Migrate** lives in `prisma.config.ts`, `datasource.url`.
-- The **connection at runtime** is passed to the `PrismaClient` constructor
-  as an adapter (`PrismaPg`) — never in the schema file.
-- Generated client output: `src/generated/prisma` (gitignored).
+El módulo de email **solo envía**; el ciclo de vida del token
+(generar/persistir/validar) pertenece al hexágono de auth. La orquestación
+entre ambos ocurre en el server action de registro.
 
-### `ui/` — presentation only
+**`modules/shared/ui-state`** usa el mismo patrón para estado del navegador.
+Aloja el enum compartido `Size` y dos stores de feature, cada uno aislado
+detrás de un puerto manejado:
 
-Components are exported through **barrels** (`ui/index.ts` +
-`ui/features/*/index.ts`) so consumers never use deep imports. The library
-follows a **Server-first** approach:
+- **Sidebar** — puerto `ForSidebarState`, `HandleSidebarStateUseCase`,
+  `SidebarState/zustand-sidebar-adapter.ts` (colapsado + abierto).
+- **Carrito** — puerto `ForCartStore`, `HandleProductsInCartUseCase`,
+  `CartState/zustand-cart-adapter.ts` (persistido con el middleware `persist`
+  de Zustand bajo la clave `shopping-cart`). El adaptador rehidrata los DTOs
+  persistidos de vuelta a instancias de dominio `CartProduct` mediante una
+  función `merge`.
 
-- Pages and static containers are Server Components.
-- Interactive pieces are small Client Component "islands"
-  (e.g. `ProductSlideshow`, `QuantitySelector`, `SidebarWrapper`,
-  `TopMenuCartCount`, `CartItems`).
+La UI consume estos estados a través de las fábricas del módulo, nunca el
+store de Zustand directamente.
 
-### Data flow: pages → actions → use case → adapter
+### Capa de datos (Prisma 7)
 
-Pages never touch the adapter directly. They call **server actions**
-(`ui/features/product/actions/`) which are `"use server"` functions that get
-the use case from the module factory:
+La configuración de conexión sigue las convenciones de Prisma 7:
+
+```
+prisma.config.ts                                            ← tooling (raíz)
+modules/shared/ui-state/infrastructure/adapters/out/
+  persistence/prisma/schema.prisma                           ← schema
+  persistence/prisma/migrations/                             ← migraciones
+  persistence/prisma/prisma.ts                               ← conexión
+```
+
+- La **URL de Migrate** vive en `prisma.config.ts`, `datasource.url`.
+- La **conexión en runtime** se pasa al constructor de `PrismaClient` como
+  adaptador (`PrismaPg`) — nunca en el schema.
+- Cliente generado en `src/generated/prisma` (gitignored).
+
+Migraciones aplicadas:
+
+| Migración                              | Contenido                                    |
+| -------------------------------------- | -------------------------------------------- |
+| `20260809163453_teslo`                 | Esquema inicial (catálogo)                   |
+| `20260813180224_add_user`              | Modelo `User` + `Role`                       |
+| `20260813182459_add_email_verification_token` | Token y expiración de verificación    |
+| `20260813224006_add_email_verified`    | Campo `emailVerified`                        |
+
+### `ui/` — solo presentación
+
+Los componentes se exportan mediante **barrels** (`ui/index.ts` +
+`ui/features/*/index.ts`) para que los consumidores nunca usen imports
+profundos. La librería sigue un enfoque **Server-first**:
+
+- Las páginas y contenedores estáticos son Server Components.
+- Las piezas interactivas son pequeños "islas" de Client Components
+  (p. ej. `ProductSlideshow`, `QuantitySelector`, `SidebarWrapper`,
+  `TopMenuCartCount`, `CartItems`, `LoginForm`, `RegisterForm`,
+  `VerifyEmailForm`).
+
+Cada feature expone sus **server actions** en `ui/features/*/actions/` y sus
+componentes en `ui/features/*/components/`.
+
+### Flujo de datos: páginas → actions → use case → adapter
+
+Las páginas nunca tocan el adaptador directamente. Llaman **server actions**
+(`"use server"`) que obtienen el caso de uso desde la fábrica del módulo:
 
 ```
 src/app/(shop)/page.tsx
   └─ getPaginatedProductsWithImages({ page, take })   [server action]
        └─ HandleProductsUseCase.getAllProductsWithImages(page, take)
-            └─ PrismaProductsHandler (1 query with include)
+            └─ PrismaProductsHandler (1 query con include)
 ```
 
-The same pattern powers stock on the product page:
-`StockLabel` → `getStockByProductSlug` → use case → handler.
+El mismo patrón alimenta el stock de la página de producto:
+`StockLabel` → `getStockByProductSlug` → caso de uso → handler.
 
-The cart follows the same layering on the client: the product page adds items
-through `HandleProductsInCartUseCase` → `ForCartStore` port →
-`ZustandCartAdapter` (persisted to `localStorage`). `CartItems` and
-`TopMenuCartCount` read the store as the single source of truth via
+El carrito sigue el mismo encapsulamiento en el cliente: la página de producto
+agrega items a través de `HandleProductsInCartUseCase` → puerto
+`ForCartStore` → `ZustandCartAdapter` (persistido en `localStorage`).
+`CartItems` y `TopMenuCartCount` leen el store como única fuente de verdad vía
 `useSyncExternalStore`:
 
 ```
-ProductDetails (add to cart) / CartItems / TopMenuCartCount
-  └─ HandleProductsInCartUseCase (client use case)
-       └─ ForCartStore (driven port)
+ProductDetails (agregar al carrito) / CartItems / TopMenuCartCount
+  └─ HandleProductsInCartUseCase (caso de uso de cliente)
+       └─ ForCartStore (puerto manejado)
             └─ ZustandCartAdapter (persist → localStorage "shopping-cart")
 ```
 
-### Screens (App Router)
+### Flujo de autenticación
 
-| Route                      | Description                                    |
-| -------------------------- | ---------------------------------------------- |
-| `/`                        | Home — product grid (read from Postgres)       |
-| `/product/[slug]`          | Product detail (slideshow, size, qty, stock)   |
-| `/products`                | Products listing                               |
-| `/category/[id]`           | Category listing by gender (paged)             |
-| `/cart`                    | Cart with live totals (persisted store)        |
-| `/checkout/address`        | Address form                                   |
-| `/checkout`                | Order review (verify order)                    |
-| `/orders`                  | Order list (demo data)                         |
-| `/orders/[id]`             | Order detail                                   |
-| `/auth/login`              | Sign in                                        |
-| `/auth/new-account`        | Sign up                                        |
-| `/terminos` + `/politicas` | Legal pages (Colombian context)                |
-| `/empty`                   | Empty state demo                               |
-| `/admin`                   | Admin placeholder                              |
+**Registro** (`ui/features/register/actions/register-action.ts`):
 
-> The shop pages are wired to the database through **server actions**
-> (`ui/features/product/actions`) that call the use case. The home
-> (`getPaginatedProductsWithImages`) and category pages
-> (`getProductsByGender`) use Prisma `include` to fetch each product with its
-> category and images in a single query, then render with
-> `revalidate = 60` (ISR) — or `generateMetadata` per product on
+1. Imagen de perfil opcional → `ImageUpload` → Cloudinary → URL.
+2. `register(UserSaveCommand)` — crea el usuario con contraseña hasheada.
+3. Genera token (`randomBytes(32).toString("hex")`) con expiración de 24 h y
+   lo persiste (`saveEmailVerification`).
+4. Envía el correo de verificación (`verificationEmail(email, link)` vía el
+   hexágono de email).
+5. Redirige a `/auth/check-email`.
+
+**Verificación** (`/auth/verify-email`):
+
+- La página lee el token de `searchParams` y renderiza `VerifyEmailForm`.
+- La server action `verify-email-action` valida el token: inválido → error,
+  ya verificado → idempotente, expirado → error; si todo está bien marca
+  `emailVerified` y limpia el token (un solo uso).
+
+**Login** (`ui/features/login/actions/login-action.ts`): valida credenciales
+con `HandleAuthUseCase.login` y redirige a `/` en caso de éxito; los errores
+tipados se muestran en el formulario.
+
+### Pantallas (App Router)
+
+| Ruta                         | Descripción                                  |
+| ---------------------------- | -------------------------------------------- |
+| `/`                          | Home — grilla de productos (desde Postgres)  |
+| `/product/[slug]`            | Detalle de producto (slideshow, talla, stock)|
+| `/products`                  | Listado de productos                         |
+| `/category/[id]`             | Listado por categoría/género (paginado)      |
+| `/cart`                      | Carrito con totales en vivo (persistido)     |
+| `/checkout/address`          | Formulario de dirección                      |
+| `/checkout`                  | Revisión de la orden                         |
+| `/orders`                    | Listado de órdenes (demo)                    |
+| `/orders/[id]`               | Detalle de orden                             |
+| `/auth/login`                | Iniciar sesión                               |
+| `/auth/new-account`          | Crear cuenta (avatar + verificación)         |
+| `/auth/verify-email`         | Verificación de correo por token             |
+| `/terminos` + `/politicas`   | Páginas legales (contexto colombiano)        |
+| `/empty`                     | Demo de estado vacío                         |
+| `/admin`                     | Placeholder de administración                |
+
+> Las páginas de la tienda están conectadas a la base de datos mediante
+> **server actions** (`ui/features/product/actions`) que llaman al caso de
+> uso. Home (`getPaginatedProductsWithImages`) y categorías
+> (`getProductsByGender`) usan `include` de Prisma para traer cada producto
+> con su categoría e imágenes en una sola consulta, y renderizan con
+> `revalidate = 60` (ISR) — o `generateMetadata` por producto en
 > `/product/[slug]`.
 
-## Getting Started
+## Empezar
 
-### 1. Clone the repository
+### 1. Clonar el repositorio
 
 ```bash
 git clone <repo-url> teslo-shop
 cd teslo-shop
 ```
 
-### 2. Install dependencies
+### 2. Instalar dependencias
 
 ```bash
 npm install
 ```
 
-### 3. Configure the environment
-
-Copy the template and fill in your database credentials:
+### 3. Configurar el entorno
 
 ```bash
 cp .env-template .env
 ```
 
-Edit `.env` (values must match `docker-compose.yml` if you use the local
-PostgreSQL container):
+Editar `.env` (los valores de la base deben coincidir con
+`docker-compose.yml` si usás el contenedor local de PostgreSQL):
 
 ```bash
+# Base de datos
 DB_USER=postgres
 DB_NAME=teslo-shop
 DB_PASSWORD=123456
 DATABASE_URL="postgresql://postgres:123456@localhost:5432/teslo-shop?schema=public"
+
+# NextAuth (generalo con: openssl rand -base64 32)
+AUTH_SECRET=
+
+# Cloudinary (upload de avatares)
+CLOUDINARY_URL=cloudinary://api_key:api_secret@cloud_name
+
+# Gmail (App Password con 2FA habilitada)
+GMAIL_USER=tu-correo@gmail.com
+GMAIL_APP_PASSWORD=tu-app-password
 ```
 
-### 4. Start PostgreSQL (Docker)
+### 4. Levantar PostgreSQL (Docker)
 
 ```bash
 docker compose up -d
 ```
 
-### 5. Run Prisma commands
-
-Migrations and the client are generated relative to your local setup, so run
-them once after cloning:
+### 5. Ejecutar Prisma
 
 ```bash
-# Apply pending migrations to create the schema and tables
+# Aplicar migraciones pendientes (crea el schema y las tablas)
 npx prisma migrate dev
 
-# Generate the Prisma Client into src/generated/prisma
+# Generar el cliente de Prisma en src/generated/prisma
 npx prisma generate
 ```
 
-### 6. Seed the database (optional but recommended)
+### 6. Sembrar la base de datos (opcional pero recomendado)
 
-Populates the catalog — 4 categories, 52 products and 104 product images:
+Puebla el catálogo — 4 categorías, 52 productos y 104 imágenes:
 
 ```bash
 npm run seed
 ```
 
-> ⚠️ `npm run seed` **resets** the database first (`deleteAll`), then inserts
-> the catalog. It is meant to be re-run whenever you want fresh demo data.
+> ⚠️ `npm run seed` **resetea** la base primero (`deleteAll`) y luego inserta
+> el catálogo. Está pensado para ejecutarse cada vez que quieras datos demo
+> frescos.
 
-### 7. Start the development server
+### 7. Iniciar el servidor de desarrollo
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Abrir [http://localhost:3000](http://localhost:3000).
 
 ## Scripts
 
 ```bash
-npm run dev          # development server (Turbopack)
-npm run build        # production build (type-check + static generation)
-npm start            # run the production build
-npm run lint         # ESLint (Next.js config)
-npm run seed         # reset + insert demo catalog (tsx runner)
+npm run dev          # servidor de desarrollo (Turbopack)
+npm run build        # build de producción (type-check + generación estática)
+npm start            # ejecutar el build de producción
+npm run lint         # ESLint (config de Next.js)
+npm run seed         # reset + insertar catálogo demo (runner tsx)
 ```
 
-## Prisma commands
+## Comandos de Prisma
 
-The schema lives inside the module, so Prisma reads the paths from
-`prisma.config.ts` (root).
+El schema vive dentro del módulo, así que Prisma lee las rutas desde
+`prisma.config.ts` (raíz).
 
 ```bash
-# Validate the schema (no DB needed)
+# Validar el schema (sin necesidad de base de datos)
 npx prisma validate
 
-# Reformat the schema file
+# Reformatar el archivo del schema
 npx prisma format
 
-# Generate the Prisma Client into src/generated/prisma
+# Generar el cliente de Prisma en src/generated/prisma
 npx prisma generate
 
-# Create a new migration from schema changes
-npx prisma migrate dev --name <migration-name>
+# Crear una migración nueva a partir de cambios en el schema
+npx prisma migrate dev --name <nombre-migracion>
 
-# Apply pending migrations / sync dev DB with the schema
+# Aplicar migraciones pendientes / sincronizar la DB de desarrollo
 npx prisma migrate dev
 
-# Show migration status (applied vs pending)
+# Mostrar estado de migraciones (aplicadas vs pendientes)
 npx prisma migrate status
 
-# Interactive DB browser
+# Explorador interactivo de la base de datos
 npx prisma studio
 
-# Reset the dev database (drops, re-applies migrations, runs seed)
+# Resetear la base de desarrollo (dropea, reaplica migraciones, corre seed)
 npx prisma migrate reset
 ```
 
-> **Prisma 7 note**: `npx prisma generate` regenerates the client into
-> `src/generated/prisma` (gitignored). The runtime connection uses the
-> `PrismaPg` adapter inside `prisma.ts` — the URL never lives in the schema.
+> **Nota Prisma 7**: `npx prisma generate` regenera el cliente en
+> `src/generated/prisma` (gitignored). La conexión en runtime usa el adaptador
+> `PrismaPg` dentro de `prisma.ts` — la URL nunca vive en el schema.
 
-## Design conventions
+## Convenciones de diseño
 
-- **Design tokens** live in `src/app/globals.css` under Tailwind v4 `@theme`
-  (`--color-primary`: `#274494` family).
-- Global button classes `.btn-primary` / `.btn-secondary`.
-- Lists/status use pill badges with the primary palette; inputs use a shared
-  focus ring.
-- Animations are CSS-only and respect `prefers-reduced-motion`.
-- UI copy is Spanish; code and identifiers are English.
+- **Design tokens** en `src/app/globals.css` con `@theme` de Tailwind v4
+  (familia `--color-primary`: `#274494`).
+- Clases globales de botones `.btn-primary` / `.btn-secondary`.
+- Listas/estados usan badges tipo pill con la paleta primaria; los inputs
+  comparten un anillo de foco.
+- Las animaciones son solo CSS y respetan `prefers-reduced-motion`.
+- El copy de UI está en español; el código y los identificadores en inglés.
+- Los correos transaccionales usan CSS inline (los clientes de correo ignoran
+  Tailwind) con la paleta de la marca.
 
-## Project structure
+## Estructura del proyecto
 
 ```
 teslo-shop/
@@ -296,198 +381,109 @@ teslo-shop/
 ├── package.json
 ├── tsconfig.json
 ├── next.config.ts
+├── auth.ts                          # Configuración de NextAuth (sesión)
+├── auth.config.ts                   # Configuración de NextAuth (pages + providers)
 ├── .env / .env-template
 ├── .gitignore
 ├── modules/
-│   ├── products/
+│   ├── auth/
 │   │   ├── domain/
 │   │   │   ├── model/
-│   │   │   │   ├── category.ts
-│   │   │   │   ├── commands/
-│   │   │   │   │   ├── category-save-command.ts
-│   │   │   │   │   ├── product-save-command.ts
-│   │   │   │   │   └── product-image-save-command.ts
-│   │   │   │   ├── gender.ts
-│   │   │   │   ├── product.ts
-│   │   │   │   └── productImage.ts
-│   │   │   ├── error/
-│   │   │   │   ├── category-already-exists-exception.ts
-│   │   │   │   ├── category-not-exists-exception.ts
-│   │   │   │   ├── gender-not-exists-exception.ts
-│   │   │   │   ├── product-already-exists-exception.ts
-│   │   │   │   ├── product-not-exists-exception.ts
-│   │   │   │   └── products-persistence-exception.ts
-│   │   │   └── ports/
-│   │   │       └── drivens/
-│   │   │           └── for-handle-products.ts
-│   │   ├── application/
-│   │   │   └── usecases/
-│   │   │       └── handle-products-use-case.ts
+│   │   │   │   ├── auth-session.ts
+│   │   │   │   ├── commands/user-save-command.ts
+│   │   │   │   ├── login-credentials.ts
+│   │   │   │   ├── role.ts
+│   │   │   │   └── user.ts          # emailVerified + token de verificación
+│   │   │   ├── error/               # Excepciones de dominio
+│   │   │   └── ports/driven/
+│   │   │       ├── for-auth.ts
+│   │   │       └── for-auth-session.ts
+│   │   ├── application/usecases/handle-auth-use-case.ts
 │   │   └── infrastructure/
-│   │       ├── adapters/
-│   │       │   └── out/
-│   │       │       └── HandleProducts/
-│   │       │           ├── prisma-products-handler.ts
-│   │       │           ├── utils/              # Adapter mappers (row → domain)
-│   │       │           │   ├── category.mapper.ts
-│   │       │           │   ├── product-image.mapper.ts
-│   │       │           │   └── product.mapper.ts
-│   │       │           └── persistence/
-│   │       │               └── prisma/
-│   │       │                   └── schema.prisma
-│   │       └── config/
-│   │           └── factory/
-│   └── shared/
-│       └── ui-state/
-│           ├── index.ts
-│           ├── domain/
-│           │   ├── model/
-│           │   │   ├── cart-product.ts
-│           │   │   └── size.ts
-│           │   └── ports/
-│           │       ├── for-cart-store.ts
-│           │       └── for-sidebar-state.ts
-│           ├── application/
-│           │   └── usecases/
-│           │       ├── handle-products-in-cart-use-case.ts
-│           │       └── handle-sidebar-state-use-case.ts
-│           └── infrastructure/
-│               ├── adapters/
-│               │   └── out/
-│               │       ├── CartState/
-│               │       │   ├── cart-store.ts
-│               │       │   └── zustand-cart-adapter.ts
-│               │       └── SidebarState/
-│               │           ├── sidebar-store.ts
-│               │           └── zustand-sidebar-adapter.ts
-│               └── config/
-│                   └── factory/
-│                       ├── handle-products-in-cart-use-case-factory.ts
-│                       └── handle-sidebar-state-use-case-factory.ts
+│   │       ├── adapters/out/auth/
+│   │       │   ├── next-auth-handler.ts
+│   │       │   ├── prisma-users-handler.ts
+│   │       │   └── mappers/toUserDomainMapper.ts
+│   │       └── config/factory/handle-auth-use-case-factory.ts
+│   ├── email/
+│   │   ├── domain/
+│   │   │   ├── model/email-message.ts
+│   │   │   └── ports/driven/for-email-sender.ts
+│   │   ├── application/usecases/email-sender-handler-use-case.ts
+│   │   └── infrastructure/
+│   │       ├── adapters/out/send/GmailEmailSederAdapter.ts
+│   │       ├── config/factory/email-sender-handler-use-case-factory.ts
+│   │       └── templates/verification-email.ts
+│   ├── products/
+│   │   ├── domain/
+│   │   │   ├── model/               # category, gender, product, productImage, commands
+│   │   │   ├── error/               # Excepciones de dominio
+│   │   │   └── ports/driven/for-handle-products.ts
+│   │   ├── application/usecases/handle-products-use-case.ts
+│   │   └── infrastructure/
+│   │       ├── adapters/out/HandleProducts/
+│   │       │   ├── prisma-products-handler.ts
+│   │       │   ├── utils/           # Mappers del adaptador (fila → dominio)
+│   │       │   └── persistence/prisma/schema.prisma (mover a shared)
+│   │       └── config/factory/
+│   ├── shared/
+│   │   └── ui-state/
+│   │       ├── domain/
+│   │       │   ├── model/           # cart-product, size
+│   │       │   └── ports/           # for-cart-store, for-sidebar-state
+│   │       ├── application/usecases/
+│   │       ├── infrastructure/
+│   │       │   ├── adapters/out/
+│   │       │   │   ├── CartState/   # cart-store + zustand-cart-adapter
+│   │       │   │   ├── SidebarState/
+│   │       │   │   ├── CloudinaryUpload/  # adapter de avatares
+│   │       │   │   └── Encrypt/     # bcrypt-validator-adapter
+│   │       │   └── persistence/prisma/   # schema + migraciones
+│   │       └── config/factory/
+│   └── orders/                      # (en preparación)
 ├── ui/
 │   ├── index.ts
-│   ├── components/
-│   │   ├── error-message/
-│   │   │   └── ErrorMessage.tsx
-│   │   ├── footer/
-│   │   │   └── Footer.tsx
-│   │   ├── not-found/
-│   │   │   └── PageNotFound.tsx
-│   │   ├── sidebar/
-│   │   │   ├── Sidebar.tsx
-│   │   │   ├── SidebarBackdrop.tsx
-│   │   │   ├── SidebarCloseButton.tsx
-│   │   │   └── SidebarWrapper.tsx
-│   │   ├── title/
-│   │   │   └── Title.tsx
-│   │   └── top-menu/
-│   │       ├── TopMenu.tsx
-│   │       ├── TopMenuCartCount.tsx
-│   │       ├── OpenMenuButton.tsx
-│   │       └── ScrollShadow.tsx
+│   ├── components/                  # sidebar, top-menu, title, footer...
 │   └── features/
-│       ├── cart/
-│       │   ├── index.ts
-│       │   ├── components/
-│       │   │   └── CartItems.tsx
-│       │   └── utils/
-│       │       └── currency-format.ts
-│       ├── checkout/
-│       │   ├── index.ts
-│       │   └── CheckoutItems.tsx
-│       ├── orders/
-│       │   ├── index.ts
-│       │   └── components/
-│       │       └── OrdersItems.tsx
-│       ├── product/
-│       │   ├── index.ts
-│       │   ├── actions/            # Server actions (pages → use case)
-│       │   │   ├── get-product-by-slug.ts
-│       │   │   └── product-pagination.ts
-│       │   ├── interfaces/
-│       │   │   ├── product.interface.ts
-│       │   │   └── response/       # UI response contracts
-│       │   │       ├── category-response.interface.ts
-│       │   │       ├── gender-reponse.type.ts
-│       │   │       ├── product-image-response.interface.ts
-│       │   │       ├── product-response.interface.ts
-│       │   │       └── size-response.type.ts
-│       │   ├── mappers/
-│       │   │   └── product.mapper.ts  # productToResponse (domain → UI)
-│       │   └── components/
-│       │       ├── product-details/
-│       │       │   └── ProductDetails.tsx
-│       │       ├── quantity-selector/
-│       │       │   └── QuantitySelector.tsx
-│       │       ├── size-selector/
-│       │       │   └── SizeSelector.tsx
-│       │       ├── slideshow/
-│       │       │   ├── ProductSlideshow.tsx
-│       │       │   ├── ProductMobileSlideshow.tsx
-│       │       │   └── slideshow.css
-│       │       └── stock-label/
-│       │           └── StockLabel.tsx
-│       └── products/
-│           ├── index.ts
-│           └── products-grid/
-│               ├── ProductsGrid.tsx
-│               ├── ProductGridItem.tsx
-│               └── ProductGridImage.tsx
+│       ├── cart/                    # CartItems + currency-format
+│       ├── checkout/                # CheckoutItems
+│       ├── login/                   # actions/ + components/Login-form
+│       ├── orders/                  # OrdersItems
+│       ├── product/                 # actions/ + components/ + mappers/
+│       ├── products/                # ProductsGrid
+│       ├── register/                # actions/ + components/Register-form
+│       └── verify-email/            # actions/ + components/Verify-email-form
 └── src/
     ├── app/
-    │   ├── layout.tsx                 # Root layout (fonts, globals, metadata)
-    │   ├── globals.css                # Tailwind v4 tokens + global styles
-    │   ├── (shop)/
-    │   │   ├── layout.tsx
-    │   │   ├── page.tsx               # Home (paged catalog, ISR)
-    │   │   ├── admin/page.tsx
-    │   │   ├── cart/page.tsx
-    │   │   ├── category/
-    │   │   │   ├── [id]/page.tsx
-    │   │   │   └── not-found.tsx
-    │   │   ├── checkout/
-    │   │   │   ├── page.tsx
-    │   │   │   └── address/page.tsx
-    │   │   ├── empty/page.tsx
-    │   │   ├── orders/
-    │   │   │   ├── page.tsx
-    │   │   │   └── [id]/page.tsx
-    │   │   ├── politicas/page.tsx
-    │   │   ├── product/
-    │   │   │   ├── [slug]/page.tsx
-    │   │   │   └── not-found.tsx
-    │   │   ├── products/page.tsx
-    │   │   └── terminos/page.tsx
-    │   └── auth/
-    │       ├── layout.tsx
-    │       ├── login/page.tsx
-    │       └── new-account/page.tsx
-    ├── config/
-    │   └── fonts.ts                   # Inter + Montserrat Alternates (titleFont)
-    └── seed/
-        ├── seed.ts                    # Demo product catalog (initialData)
-        ├── seed-database.ts           # Seed runner: reset + insert via use case
-        └── mappers/                   # Seed input mappers (UI data → commands)
-            └── seed-product.mapper.ts
+    │   ├── layout.tsx               # Layout raíz (fonts, globals, metadata)
+    │   ├── globals.css              # Tokens Tailwind v4 + estilos globales
+    │   ├── (shop)/                  # Tienda (home, productos, carrito, checkout...)
+    │   └── auth/                    # login, new-account, verify-email
+    ├── config/fonts.ts              # Inter + Montserrat Alternates (titleFont)
+    └── seed/                        # Catálogo demo (reset + insert)
 ```
 
-> `node_modules/`, `.next/`, `src/generated/`, and local tooling directories
-> (`.agents/`, `.claude/`, `.windsurf/`) are excluded from the tree.
+> `node_modules/`, `.next/`, `src/generated/` y los directorios locales de
+> tooling (`.agents/`, `.claude/`, `.windsurf/`) quedan excluidos del árbol.
 
-## Roadmap / known gaps
+## Roadmap / brechas conocidas
 
-- **Catalog reads from Postgres**: home, category (by gender) and product
-  detail pages fetch through the use case; `PrismaProductsHandler` covers
-  paging (`getAllProductsWithImages`, `getProductsByGender`), counts,
-  by-slug lookups and stock. Seed populates the catalog for real.
-- **Cart persists on the client**: Zustand `persist` under `shopping-cart`,
-  read by `CartItems`/`TopMenuCartCount` as the single source of truth.
-  Checkout has not been wired to it yet.
-- Auth pages are presentational stubs.
-- Orders/admin/checkout flows still render demo or placeholder data.
-- No automated tests yet (no test runner or suite configured).
+- **Catálogo desde Postgres**: home, categoría (por género) y detalle de
+  producto consultan a través del caso de uso; `PrismaProductsHandler` cubre
+  paginación, conteos, búsquedas por slug y stock. El seed puebla el catálogo.
+- **Carrito persistido en el cliente**: Zustand `persist` bajo
+  `shopping-cart`, leído por `CartItems`/`TopMenuCartCount` como única fuente
+  de verdad. El checkout todavía no está cableado a él.
+- **Registro y verificación de email**: flujo completo implementado
+  (registro → token → correo → verificación). Pendiente: completar el
+  `authorize()` de NextAuth para validar credenciales contra la base de datos
+  (hoy el login rechaza todo), crear la página `/auth/check-email`, conectar
+  `RegisterForm` a la action de registro, y verificar el envío real de correos
+  con Gmail.
+- Las rutas de órdenes/admin/checkout todavía muestran demo o placeholders.
+- Sin tests automatizados todavía (sin runner ni suite configurada).
 
 ---
 
-> Learning project — illustrations, terms and legal texts are for
-> demonstration purposes.
+> Proyecto de aprendizaje — las ilustraciones, términos y textos legales son
+> con fines de demostración.
