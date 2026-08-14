@@ -4,7 +4,6 @@ import { LoginCredential } from "../../../../domain/model/login-credentials";
 import { ForAuthSession } from "../../../../domain/ports/driven/for-auth-session";
 import { InvalidCredentialsException } from "../../../../domain/error/invalid-credentials-exception";
 import { AuthSession } from "../../../../domain/model/auth-session";
-import { User } from "../../../../domain/model/user";
 import { Role } from "../../../../domain/model/role";
 import { AuthException } from "../../../../domain/error/auth-exception";
 
@@ -47,18 +46,15 @@ export class NextAuthHandler implements ForAuthSession {
 
     if (!session?.user) return null;
 
-const user = new User(
-        session.user.id ?? "",
-        session.user.name ?? "",
-        session.user.email ?? "",
-        Role.user,
-        session.user.image ?? "",
-        session.user.emailVerified ?? null,
-        null,
-        null,
-      );
-
-    return new AuthSession(user, new Date(session.expires));
+    return new AuthSession(
+      session.user.id ?? "",
+      session.user.email ?? "",
+      session.user.name ?? "",
+      session.user.image ?? "",
+      session.user.role as Role,
+      session.user.emailVerified ?? null,
+      new Date(session.expires),
+    );
   }
 
   async isAuthenticated(): Promise<boolean> {

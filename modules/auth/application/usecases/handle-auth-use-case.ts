@@ -6,6 +6,7 @@ import { ForAuth } from "../../domain/ports/driven/for-auth";
 import { ForAuthSession } from "../../domain/ports/driven/for-auth-session";
 import { VerificationTokenExpiredException } from "../../domain/error/verification-token-expired-exception";
 import { VerificationTokenInvalidException } from "../../domain/error/verification-token-invalid-exception";
+import { UserNotExistsException } from "../../domain/error/user-not-exists-exception";
 import { UserSeedSaveCommand } from "../../domain/model/commands/user-seed-save-command";
 
 export class HandleAuthUseCase {
@@ -27,6 +28,19 @@ export class HandleAuthUseCase {
 
   public getSession(): Promise<AuthSession | null> {
     return this.forAuthSession.getSession();
+  }
+
+  public async getCurrentUser(): Promise<User | null> {
+    const session = await this.forAuthSession.getSession();
+    const email = session?.getEmail();
+    if (!email) return null;
+
+    try {
+      return await this.forAuth.findUserByEmail(email);
+    } catch (error) {
+      if (error instanceof UserNotExistsException) return null;
+      throw error;
+    }
   }
 
   public isAuthenticated(): Promise<boolean> {

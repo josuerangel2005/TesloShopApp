@@ -27,6 +27,8 @@ export class NextAuthAuthorize {
         name: user.getName(),
         email: user.getEmail(),
         image: user.getImage(),
+        role: user.getRole(),
+        emailVerified: user.getEmailVerified(),
       };
     } catch (error) {
       if (error instanceof InvalidCredentialsException) return null;
