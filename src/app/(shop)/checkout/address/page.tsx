@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Title } from "../../../../../ui";
+import { getAllCountriesAction, Title } from "../../../../../ui";
 import { AddressForm } from "../../../../../ui/features/address/components/AddressForm";
 
 export const metadata: Metadata = {
@@ -10,13 +10,15 @@ export const metadata: Metadata = {
 const fieldClass =
   "rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 transition-colors placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
 
-export default function () {
+export default async function () {
+  const countries = await getAllCountriesAction();
+
   return (
     <div className="flex flex-col items-center justify-center px-4 py-8 sm:px-0">
       <div className="flex w-full flex-col text-left xl:w-[1000px]">
         <Title title="Dirección" subTitle="Dirección de entrega" />
 
-        <AddressForm />
+        <AddressForm countries={countries} />
 
         <style>{`
           .address-card {

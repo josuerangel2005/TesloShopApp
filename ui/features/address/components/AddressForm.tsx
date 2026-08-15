@@ -1,153 +1,267 @@
-import Link from "next/link";
-import { getAllCountriesAction } from "../actions/get-countries-action";
+"use client";
+import { CountryActionResponse } from "../interface/country-action-response";
+import { saveUserAddressAction } from "../actions/save-user-address-action";
+import { deleteUserAddressAction } from "../actions/delete-user-address-action";
+import { useRouter } from "next/navigation";
+import { getHandleAddressStateUseCase } from "../../../../modules/shared/ui-state/infrastructure/config/factory/handle-address-state-use-case-factory";
+import { Address } from "../../../../modules/shared/ui-state/domain/model/address";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { getAddressByUserIdAction } from "../actions/get-address-by-user-id-action";
+import { addressResponseToAddress } from "../mapper/address.mapper";
 
 const fieldClass =
   "rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 transition-colors placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
 
-export const AddressForm = async () => {
-  const countries = await getAllCountriesAction();
+interface Props {
+  countries: CountryActionResponse[];
+}
+
+export const AddressForm = ({ countries }: Props) => {
+  const handleAddressStateUseCase = getHandleAddressStateUseCase();
+
+  const address = useSyncExternalStore(
+    (listener) => handleAddressStateUseCase.subscribe(listener),
+    () => handleAddressStateUseCase.getAddress(),
+    () => null,
+  );
+
+  const router = useRouter();
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const fetchAddress = async () => {
+      if (address) {
+        setReady(true);
+        return;
+      }
+
+      try {
+        const userAddress = await getAddressByUserIdAction();
+        if (userAddress) {
+          handleAddressStateUseCase.saveAddress(
+            addressResponseToAddress(userAddress),
+          );
+        }
+      } catch {
+      } finally {
+        setReady(true);
+      }
+    };
+
+    fetchAddress();
+  }, [address, handleAddressStateUseCase]);
+
+  const handleSubmitForm = async (formData: FormData) => {
+    const fields = {
+      firstName: formData.get("firstName")?.toString() ?? "",
+      lastName: formData.get("lastName")?.toString() ?? "",
+      address: formData.get("address")?.toString() ?? "",
+      address2: formData.get("address2")?.toString() ?? "",
+      postalCode: formData.get("postalCode")?.toString() ?? "",
+      city: formData.get("city")?.toString() ?? "",
+      country: formData.get("country")?.toString() ?? "",
+      phone: formData.get("phone")?.toString() ?? "",
+      remember: formData.get("remember") === "on",
+    };
+
+    handleAddressStateUseCase.saveAddress(
+      new Address(
+        fields.firstName,
+        fields.lastName,
+        fields.address,
+        fields.address2,
+        fields.postalCode,
+        fields.city,
+        fields.country,
+        fields.phone,
+      ),
+    );
+
+    const remember = formData.get("remember") === "on";
+
+    if (remember) await saveUserAddressAction(formData);
+    else await deleteUserAddressAction();
+
+    router.push("/checkout");
+  };
+
   return (
     <div className="address-card rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
-        <div className="address-field flex flex-col gap-1.5">
-          <label
-            htmlFor="nombre"
-            className="text-sm font-medium text-slate-700"
-          >
-            Nombres
-          </label>
-          <input
-            id="nombre"
-            type="text"
-            placeholder="Juan"
-            className={fieldClass}
-          />
-        </div>
-
-        <div className="address-field flex flex-col gap-1.5">
-          <label
-            htmlFor="apellidos"
-            className="text-sm font-medium text-slate-700"
-          >
-            Apellidos
-          </label>
-          <input
-            id="apellidos"
-            type="text"
-            placeholder="Pérez"
-            className={fieldClass}
-          />
-        </div>
-
-        <div className="address-field flex flex-col gap-1.5">
-          <label
-            htmlFor="direccion"
-            className="text-sm font-medium text-slate-700"
-          >
-            Dirección
-          </label>
-          <input
-            id="direccion"
-            type="text"
-            placeholder="Av. Principal 123"
-            className={fieldClass}
-          />
-        </div>
-
-        <div className="address-field flex flex-col gap-1.5">
-          <label
-            htmlFor="direccion2"
-            className="text-sm font-medium text-slate-700"
-          >
-            Dirección 2 (opcional)
-          </label>
-          <input
-            id="direccion2"
-            type="text"
-            placeholder="Depto, oficina, piso"
-            className={fieldClass}
-          />
-        </div>
-
-        <div className="address-field flex flex-col gap-1.5">
-          <label htmlFor="cp" className="text-sm font-medium text-slate-700">
-            Código postal
-          </label>
-          <input
-            id="cp"
-            type="text"
-            placeholder="10101"
-            className={fieldClass}
-          />
-        </div>
-
-        <div className="address-field flex flex-col gap-1.5">
-          <label
-            htmlFor="ciudad"
-            className="text-sm font-medium text-slate-700"
-          >
-            Ciudad
-          </label>
-          <input
-            id="ciudad"
-            type="text"
-            placeholder="San José"
-            className={fieldClass}
-          />
-        </div>
-
-        <div className="address-field flex flex-col gap-1.5">
-          <label htmlFor="pais" className="text-sm font-medium text-slate-700">
-            País
-          </label>
-          <select id="pais" defaultValue="" className={fieldClass}>
-            <option value="" disabled>
-              Selecciona un país
-            </option>
-            {countries.map((country) => (
-              <option key={country.id} value={country.id}>
-                {country.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="address-field flex flex-col gap-1.5">
-          <label
-            htmlFor="telefono"
-            className="text-sm font-medium text-slate-700"
-          >
-            Teléfono
-          </label>
-          <input
-            id="telefono"
-            type="text"
-            placeholder="+506 8888 8888"
-            className={fieldClass}
-          />
-        </div>
-
-        <div className="address-field address-submit flex flex-col gap-5 sm:col-span-2">
-          <label
-            htmlFor="remember-address"
-            className="flex cursor-pointer select-none items-center gap-2.5 text-sm text-slate-700"
-          >
+      {!ready ? (
+        <p className="py-8 text-center text-sm text-slate-500">
+          Cargando dirección…
+        </p>
+      ) : (
+        <form
+          action={handleSubmitForm}
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5"
+        >
+          <div className="address-field flex flex-col gap-1.5">
+            <label
+              htmlFor="firstName"
+              className="text-sm font-medium text-slate-700"
+            >
+              Nombres
+            </label>
             <input
-              id="remember-address"
-              type="checkbox"
-              defaultChecked
-              className="size-4 cursor-pointer accent-primary"
+              defaultValue={address?.getFirstName()}
+              id="firstName"
+              name="firstName"
+              type="text"
+              placeholder="Juan"
+              className={fieldClass}
             />
-            Recordar dirección para futuras compras
-          </label>
+          </div>
 
-          <Link
-            href="/checkout"
-            className="btn-primary w-full justify-center text-center sm:w-1/2"
-          >
-            Siguiente
-          </Link>
-        </div>
-      </div>
+          <div className="address-field flex flex-col gap-1.5">
+            <label
+              htmlFor="lastName"
+              className="text-sm font-medium text-slate-700"
+            >
+              Apellidos
+            </label>
+            <input
+              id="lastName"
+              defaultValue={address?.getLastName()}
+              type="text"
+              name="lastName"
+              placeholder="Pérez"
+              className={fieldClass}
+            />
+          </div>
+
+          <div className="address-field flex flex-col gap-1.5">
+            <label
+              htmlFor="address"
+              className="text-sm font-medium text-slate-700"
+            >
+              Dirección
+            </label>
+            <input
+              id="address"
+              defaultValue={address?.getAddress()}
+              type="text"
+              name="address"
+              placeholder="Av. Principal 123"
+              className={fieldClass}
+            />
+          </div>
+
+          <div className="address-field flex flex-col gap-1.5">
+            <label
+              htmlFor="address2"
+              className="text-sm font-medium text-slate-700"
+            >
+              Dirección 2 (opcional)
+            </label>
+            <input
+              id="address2"
+              type="text"
+              defaultValue={address?.getAddress2() ?? ""}
+              name="address2"
+              placeholder="Depto, oficina, piso"
+              className={fieldClass}
+            />
+          </div>
+
+          <div className="address-field flex flex-col gap-1.5">
+            <label
+              htmlFor="postalCode"
+              className="text-sm font-medium text-slate-700"
+            >
+              Código postal
+            </label>
+            <input
+              id="postalCode"
+              name="postalCode"
+              defaultValue={address?.getPostalCode()}
+              type="text"
+              placeholder="10101"
+              className={fieldClass}
+            />
+          </div>
+
+          <div className="address-field flex flex-col gap-1.5">
+            <label
+              htmlFor="city"
+              className="text-sm font-medium text-slate-700"
+            >
+              Ciudad
+            </label>
+            <input
+              id="city"
+              type="text"
+              defaultValue={address?.getCity()}
+              name="city"
+              placeholder="San José"
+              className={fieldClass}
+            />
+          </div>
+
+          <div className="address-field flex flex-col gap-1.5">
+            <label
+              htmlFor="country"
+              className="text-sm font-medium text-slate-700"
+            >
+              País
+            </label>
+            <select
+              id="country"
+              name="country"
+              defaultValue={address?.getCountry()}
+              className={fieldClass}
+            >
+              <option value="" disabled>
+                Selecciona un país
+              </option>
+              {countries.map((country) => (
+                <option key={country.id} value={country.id}>
+                  {country.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="address-field flex flex-col gap-1.5">
+            <label
+              htmlFor="phone"
+              className="text-sm font-medium text-slate-700"
+            >
+              Teléfono
+            </label>
+            <input
+              id="phone"
+              name="phone"
+              defaultValue={address?.getPhone()}
+              type="text"
+              placeholder="+506 8888 8888"
+              className={fieldClass}
+            />
+          </div>
+
+          <div className="address-field address-submit flex flex-col gap-5 sm:col-span-2">
+            <label
+              htmlFor="remember-address"
+              className="flex cursor-pointer select-none items-center gap-2.5 text-sm text-slate-700"
+            >
+              <input
+                id="remember-address"
+                name="remember"
+                type="checkbox"
+                defaultChecked
+                className="size-4 cursor-pointer accent-primary"
+              />
+              Recordar dirección para futuras compras
+            </label>
+
+            <button
+              type="submit"
+              className="btn-primary w-full justify-center text-center sm:w-1/2"
+            >
+              Siguiente
+            </button>
+          </div>
+        </form>
+      )}
     </div>
   );
 };

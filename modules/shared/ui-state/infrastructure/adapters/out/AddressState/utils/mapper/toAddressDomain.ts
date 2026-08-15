@@ -9,8 +9,10 @@ export const toAddressDomain = (address: {
   city: string;
   country: string;
   phone: string;
-}) =>
-  new Address(
+} | null): Address | null => {
+  if (!address) return null;
+
+  return new Address(
     address.firstName,
     address.lastName,
     address.address,
@@ -20,3 +22,4 @@ export const toAddressDomain = (address: {
     address.country,
     address.phone,
   );
+};

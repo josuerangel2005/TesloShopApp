@@ -11,7 +11,7 @@ interface State {
     city: string;
     country: string;
     phone: string;
-  };
+  } | null;
 
   //Methods
   setAddress: (address: State["address"]) => void;
@@ -21,16 +21,7 @@ interface State {
 export const addressStore = create<State>()(
   persist(
     (set, get) => ({
-      address: {
-        firstName: "",
-        lastName: "",
-        address: "",
-        address2: "",
-        postalCode: "",
-        city: "",
-        country: "",
-        phone: "",
-      },
+      address: null,
       setAddress: (address: State["address"]): void => {
         set({ address });
       },

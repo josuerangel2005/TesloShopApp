@@ -12,7 +12,7 @@ export class HandleAddressStateUseCase {
     return this.forAddressState.subscribe(listener);
   }
 
-  public getAddress(): Address {
+  public getAddress(): Address | null {
     return this.forAddressState.getAddress();
   }
 
