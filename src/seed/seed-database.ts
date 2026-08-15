@@ -2,20 +2,23 @@ import { CategorySaveCommand } from "../../modules/products/domain/model/command
 import { getHandleProductsUseCase } from "../../modules/products/infrastructure/config/factory/handle-products-use-case-factory";
 import { initialData } from "./seed";
 import {
+  toCountrySeedCommand,
   toProductImageSaveCommand,
   toProductSaveCommand,
   toUserSeedSaveCommand,
 } from "./mappers/seed-product.mapper";
 import { getHandleAuthUseCase } from "../../modules/auth";
+import { getHandleCountriesUseCase } from "../../modules/geography/infrastructure/config/factory/handle-countries-use-case-factory";
 
 async function main() {
   const handleProductsUseCase = getHandleProductsUseCase();
   const handleAuthUseCase = getHandleAuthUseCase();
+  const handleCountriesUseCase = getHandleCountriesUseCase();
 
   // Borrar todos los registros de base de datos
   await handleProductsUseCase.deleteAll();
 
-  const { categories, products, users } = initialData;
+  const { categories, products, users, countries } = initialData;
 
   //Añadir categorias
   await handleProductsUseCase.saveAllCategories(
@@ -55,6 +58,12 @@ async function main() {
   //Persistir usuarios
   await handleAuthUseCase.deleteAllUsers();
   await handleAuthUseCase.saveAllUsersSeed(users.map(toUserSeedSaveCommand));
+
+  //persistir countries
+  await handleCountriesUseCase.deleteAllCountries();
+  await handleCountriesUseCase.saveAllCountries(
+    countries.map(toCountrySeedCommand),
+  );
 
   console.log("Seed Executed");
 }

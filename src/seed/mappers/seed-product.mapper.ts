@@ -3,10 +3,13 @@ import { ProductImageSaveCommand } from "../../../modules/products/domain/model/
 import { ProductSaveCommand } from "../../../modules/products/domain/model/commands/product-save-command";
 import { Size } from "../../../modules/shared/ui-state/domain/model/size";
 import {
+  Country,
   Product,
   SeedUser,
 } from "../../../ui/features/product/interfaces/product.interface";
 import { UserSeedSaveCommand } from "../../../modules/auth/domain/model/commands/user-seed-save-command";
+import { CategorySaveCommand } from "../../../modules/products/domain/model/commands/category-save-command";
+import { SaveCountryCommand } from "../../../modules/geography/domain/model/commands/save-country-command";
 
 export const toProductSaveCommand = (
   product: Product,
@@ -40,3 +43,6 @@ export const toUserSeedSaveCommand = (seedUser: SeedUser) =>
     seedUser.emailVerificationToken,
     seedUser.emailVerificationExpires,
   );
+
+export const toCountrySeedCommand = (countrySeed: Country) =>
+  new SaveCountryCommand(countrySeed.name, countrySeed.id);
