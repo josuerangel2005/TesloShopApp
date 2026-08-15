@@ -15,7 +15,7 @@ interface State {
 
   //Methods
   setAddress: (address: State["address"]) => void;
-  getAddres: () => State["address"];
+  getAddress: () => State["address"];
 }
 
 export const addressStore = create<State>()(
@@ -34,7 +34,7 @@ export const addressStore = create<State>()(
       setAddress: (address: State["address"]): void => {
         set({ address });
       },
-      getAddres: (): State["address"] => get().address,
+      getAddress: (): State["address"] => get().address,
     }),
     {
       name: "address-storage",

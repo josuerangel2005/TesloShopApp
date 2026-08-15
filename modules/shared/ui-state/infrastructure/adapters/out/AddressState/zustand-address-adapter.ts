@@ -16,7 +16,7 @@ export class ZustandAddressAdapter implements ForAddressState {
   }
 
   getAddress(): Address {
-    return toAddressDomain(this.addressState.getState().getAddres());
+    return toAddressDomain(this.addressState.getState().getAddress());
   }
 
   saveAddress(address: Address): void {
