@@ -34,7 +34,6 @@ export class PrismaProductsHandler implements ForHandleProducts {
         prisma.category.deleteMany(),
       ]);
     } catch (error) {
-      if (error instanceof ProductsPersistenceException) throw error;
       throw new ProductsPersistenceException(
         `Failed to delete all products: ${error instanceof Error ? error.message : String(error)}`,
       );
@@ -56,7 +55,6 @@ export class PrismaProductsHandler implements ForHandleProducts {
         throw new CategoryAlreadyExistsException(
           categories.map((category) => category.getName()).join(", "),
         );
-      if (error instanceof ProductsPersistenceException) throw error;
       throw new ProductsPersistenceException(
         `Failed to save categories: ${error instanceof Error ? error.message : String(error)}`,
       );
@@ -77,7 +75,6 @@ export class PrismaProductsHandler implements ForHandleProducts {
         error.code === "P2025"
       )
         throw new CategoryNotExistsException(name);
-      if (error instanceof ProductsPersistenceException) throw error;
       throw new ProductsPersistenceException(
         `Failed to get category by name: ${error instanceof Error ? error.message : String(error)}`,
       );
@@ -105,7 +102,6 @@ export class PrismaProductsHandler implements ForHandleProducts {
         error.code === "P2002"
       )
         throw new ProductAlreadyExistsException(products[0].getSlug());
-      if (error instanceof ProductsPersistenceException) throw error;
       throw new ProductsPersistenceException(
         `Failed to save products: ${error instanceof Error ? error.message : String(error)}`,
       );
@@ -123,7 +119,6 @@ export class PrismaProductsHandler implements ForHandleProducts {
         })),
       });
     } catch (error) {
-      if (error instanceof ProductsPersistenceException) throw error;
       throw new ProductsPersistenceException(
         `Failed to save product images: ${error instanceof Error ? error.message : String(error)}`,
       );
@@ -145,7 +140,6 @@ export class PrismaProductsHandler implements ForHandleProducts {
         error.code === "P2025"
       )
         throw new ProductNotExistsException(slug);
-      if (error instanceof ProductsPersistenceException) throw error;
       throw new ProductsPersistenceException(
         `Failed to get product id by slug: ${error instanceof Error ? error.message : String(error)}`,
       );
@@ -179,7 +173,6 @@ export class PrismaProductsHandler implements ForHandleProducts {
     try {
       return await this.prismaClient.product.count();
     } catch (error) {
-      if (error instanceof ProductsPersistenceException) throw error;
       throw new ProductsPersistenceException(
         `Failed to count products: ${error instanceof Error ? error.message : String(error)}`,
       );
@@ -223,7 +216,6 @@ export class PrismaProductsHandler implements ForHandleProducts {
         },
       });
     } catch (error) {
-      if (error instanceof ProductsPersistenceException) throw error;
       throw new ProductsPersistenceException(
         `Failed to count products: ${error instanceof Error ? error.message : String(error)}`,
       );
