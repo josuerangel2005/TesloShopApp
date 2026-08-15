@@ -1,5 +1,5 @@
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
-import { prisma } from "../../../../../shared/ui-state/infrastructure/adapters/out/persistence/prisma/prisma";
+import { prisma } from "../../../../../shared/ui-state/infrastructure/adapters/out/Persistence/prisma/prisma";
 import { SaveCountryCommand } from "../../../../domain/model/commands/save-country-command";
 import { Country } from "../../../../domain/model/country";
 import { ForHandleCountries } from "../../../../domain/ports/driven/for-handle-countries";

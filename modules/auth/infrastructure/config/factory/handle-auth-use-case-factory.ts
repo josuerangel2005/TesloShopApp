@@ -1,5 +1,5 @@
 import { auth } from "../../../../../auth";
-import { prisma } from "../../../../shared/ui-state/infrastructure/adapters/out/persistence/prisma/prisma";
+import { prisma } from "../../../../shared/ui-state/infrastructure/adapters/out/Persistence/prisma/prisma";
 import { getEncryptPasswordUseCase } from "../../../../shared/ui-state/infrastructure/config/factory/encrypt-password-use-case-factory";
 import { HandleAuthUseCase } from "../../../application/usecases/handle-auth-use-case";
 import { NextAuthHandler } from "../../adapters/out/auth/next-auth-handler";

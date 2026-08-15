@@ -1,4 +1,4 @@
-import { prisma } from "../../../../../shared/ui-state/infrastructure/adapters/out/persistence/prisma/prisma";
+import { prisma } from "../../../../../shared/ui-state/infrastructure/adapters/out/Persistence/prisma/prisma";
 import { EncryptPasswordUseCase } from "../../../../../shared/ui-state/application/usecases/encrypt-password-use-case";
 import { UserSaveCommand } from "../../../../domain/model/commands/user-save-command";
 import { User } from "../../../../domain/model/user";
