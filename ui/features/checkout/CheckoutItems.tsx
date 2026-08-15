@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import {
   IoArrowBackOutline,
   IoLocationOutline,
@@ -25,6 +25,14 @@ export const CheckoutItems = () => {
   const storeApi = getHandleProductsInCartUseCase();
 
   const handleAddressStateUseCase = getHandleAddressStateUseCase();
+
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+
+  const onPlaceOrder = async () => {
+    setIsPlacingOrder(true);
+
+    //regirigir
+  };
 
   const address = useSyncExternalStore(
     (listener) => handleAddressStateUseCase.subscribe(listener),
@@ -204,12 +212,13 @@ export const CheckoutItems = () => {
           </Link>
         </p>
 
-        <Link
-          href="/orders/TS-10293"
-          className="btn-primary mt-6 w-full text-center"
+        <button
+          className="btn-primary mt-6 w-full text-center disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+          disabled={isPlacingOrder}
+          onClick={() => onPlaceOrder()}
         >
           Colocar Orden
-        </Link>
+        </button>
       </div>
     </div>
   );

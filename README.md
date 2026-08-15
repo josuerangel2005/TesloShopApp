@@ -16,7 +16,8 @@ TypeScript estricto, Tailwind CSS v4, Prisma ORM y una arquitectura hexagonal
 | Datos       | Prisma ORM 7 (`@prisma/adapter-pg` + `pg`), PostgreSQL      |
 | Autenticación | NextAuth v5 (beta) + bcryptjs                             |
 | Email       | Nodemailer (Gmail SMTP)                                     |
-| Imágenes    | Cloudinary SDK v2 (upload de avatares)                      |
+| Archivos    | Cloudinary SDK v2 (imágenes de perfil + documentos PDF)     |
+| PDF         | PDFShift API v3 (HTML → PDF, sandbox en desarrollo)         |
 | Validación  | Zod 4                                                       |
 | Carrusel    | Swiper 14                                                   |
 | Iconos      | react-icons (`io5`)                                         |
@@ -41,7 +42,8 @@ src/        Aplicación Next.js — rutas (App Router)
 | `modules/products`        | Dominio de productos: entidades, puerto, caso de uso, adaptador  |
 | `modules/auth`            | Autenticación: credenciales, registro, verificación de email     |
 | `modules/email`           | Envío de correos: puerto `ForEmailSender`, adaptador Gmail       |
-| `modules/shared/ui-state` | Estado de UI compartido (sidebar + carrito + `Size`)             |
+| `modules/shared/ui-state` | Estado de UI compartido (sidebar + carrito + dirección + uploads)|
+| `modules/shared/validation` | Esquemas Zod reutilizables (p. ej. `userAddressSchema`)        |
 | `modules/orders`          | (en preparación)                                                 |
 
 **`modules/products`** sigue el esquema hexagonal:
@@ -103,7 +105,7 @@ El módulo de email **solo envía**; el ciclo de vida del token
 entre ambos ocurre en el server action de registro.
 
 **`modules/shared/ui-state`** usa el mismo patrón para estado del navegador.
-Aloja el enum compartido `Size` y dos stores de feature, cada uno aislado
+Aloja el enum compartido `Size` y stores de feature, cada uno aislado
 detrás de un puerto manejado:
 
 - **Sidebar** — puerto `ForSidebarState`, `HandleSidebarStateUseCase`,
@@ -113,6 +115,19 @@ detrás de un puerto manejado:
   de Zustand bajo la clave `shopping-cart`). El adaptador rehidrata los DTOs
   persistidos de vuelta a instancias de dominio `CartProduct` mediante una
   función `merge`.
+- **Dirección** — puerto `ForAddressState`, `HandleAddressStateUseCase`,
+  `AddressState/zustand-address-adapter.ts` (prefill y guardado en el
+  checkout; se persiste en BD por usuario vía `UserAddress`).
+
+El módulo también expone el hexágono de **subida de archivos**:
+
+- **Imágenes** — `CloudinaryImageUploadAdapter` (`folder: teslo/avatars`).
+- **Documentos PDF** — `CloudinaryDocumentUploadAdapter`
+  (`resource_type: "raw"`, `folder: teslo/documents`, guard de MIME
+  `application/pdf`), con `ForDocumentUpload` + `HandleUploadDocumentUseCase`.
+- **Conversión HTML → PDF** — `ForPdfConversion` +
+  `PdfShiftDocumentConverterAdapter` (API v3, `sandbox: true` en desarrollo
+  para no gastar créditos).
 
 La UI consume estos estados a través de las fábricas del módulo, nunca el
 store de Zustand directamente.
@@ -142,6 +157,11 @@ Migraciones aplicadas:
 | `20260813180224_add_user`              | Modelo `User` + `Role`                       |
 | `20260813182459_add_email_verification_token` | Token y expiración de verificación    |
 | `20260813224006_add_email_verified`    | Campo `emailVerified`                        |
+| `20260815005140_add_countries`         | Catálogo de países (`countryId` ISO)         |
+| `20260815043109_user_address`          | Modelo `UserAddress` (dirección por usuario) |
+| `20260815043525_fix_user_address_typo` | Corrección de typo en `UserAddress`          |
+| `20260815054242_align_user_address_country_iso` | Alinea `countryId` con ISO             |
+| `20260815215752_order_address_items`   | Modelos `Order`, `OrderItem`, `OrderAddress` |
 
 ### `ui/` — solo presentación
 
@@ -176,15 +196,21 @@ El mismo patrón alimenta el stock de la página de producto:
 El carrito sigue el mismo encapsulamiento en el cliente: la página de producto
 agrega items a través de `HandleProductsInCartUseCase` → puerto
 `ForCartStore` → `ZustandCartAdapter` (persistido en `localStorage`).
-`CartItems` y `TopMenuCartCount` leen el store como única fuente de verdad vía
-`useSyncExternalStore`:
+`CartItems`, `TopMenuCartCount` y `CheckoutItems` leen el store como única
+fuente de verdad vía `useSyncExternalStore`:
 
 ```
-ProductDetails (agregar al carrito) / CartItems / TopMenuCartCount
+ProductDetails (agregar al carrito) / CartItems / TopMenuCartCount / CheckoutItems
   └─ HandleProductsInCartUseCase (caso de uso de cliente)
        └─ ForCartStore (puerto manejado)
             └─ ZustandCartAdapter (persist → localStorage "shopping-cart")
 ```
+
+El checkout también lee la dirección de entrega desde el store de dirección
+(`HandleAddressStateUseCase` → `ZustandAddressAdapter`); si viene vacío y hay
+sesión, `AddressForm` la precarga desde la BD vía `getAddressByUserIdAction`
+y valida en cliente con `userAddressSchema` (fail-closed: corta el envío si
+hay campos inválidos).
 
 ### Flujo de autenticación
 
@@ -207,7 +233,10 @@ ProductDetails (agregar al carrito) / CartItems / TopMenuCartCount
 
 **Login** (`ui/features/login/actions/login-action.ts`): valida credenciales
 con `HandleAuthUseCase.login` y redirige a `/` en caso de éxito; los errores
-tipados se muestran en el formulario.
+tipados se muestran en el formulario. El callback `authorize()` de NextAuth
+delega en `NextAuthAuthorize`, que verifica las credenciales contra la base de
+datos vía `ForAuth.verifyCredentials` (`auth.ts` → `NextAuthAuthorize` →
+`PrismaUserHandler`).
 
 ### Pantallas (App Router)
 
@@ -218,8 +247,9 @@ tipados se muestran en el formulario.
 | `/products`                  | Listado de productos                         |
 | `/category/[id]`             | Listado por categoría/género (paginado)      |
 | `/cart`                      | Carrito con totales en vivo (persistido)     |
-| `/checkout/address`          | Formulario de dirección                      |
-| `/checkout`                  | Revisión de la orden                         |
+| `/checkout/address`          | Formulario de dirección (validado + prefill) |
+| `/checkout`                  | Revisión de la orden (carrito + dirección reales) |
+| `/profile`                   | Perfil de usuario                            |
 | `/orders`                    | Listado de órdenes (demo)                    |
 | `/orders/[id]`               | Detalle de orden                             |
 | `/auth/login`                | Iniciar sesión                               |
@@ -271,8 +301,11 @@ DATABASE_URL="postgresql://postgres:123456@localhost:5432/teslo-shop?schema=publ
 # NextAuth (generalo con: openssl rand -base64 32)
 AUTH_SECRET=
 
-# Cloudinary (upload de avatares)
+# Cloudinary (upload de imágenes de perfil y documentos PDF)
 CLOUDINARY_URL=cloudinary://api_key:api_secret@cloud_name
+
+# PDFShift (HTML → PDF; crea la key en https://app.pdfshift.io → API Keys)
+PDFSHIFT_API_KEY=sk_xxxxxxxxx
 
 # Gmail (App Password con 2FA habilitada)
 GMAIL_USER=tu-correo@gmail.com
@@ -383,6 +416,7 @@ teslo-shop/
 ├── next.config.ts
 ├── auth.ts                          # Configuración de NextAuth (sesión)
 ├── auth.config.ts                   # Configuración de NextAuth (pages + providers)
+├── src/proxy.ts                     # Middleware/proxy de NextAuth (matcher: /auth, /profile, /checkout)
 ├── .env / .env-template
 ├── .gitignore
 ├── modules/
@@ -427,37 +461,43 @@ teslo-shop/
 │   │       │   └── persistence/prisma/schema.prisma (mover a shared)
 │   │       └── config/factory/
 │   ├── shared/
-│   │   └── ui-state/
-│   │       ├── domain/
-│   │       │   ├── model/           # cart-product, size
-│   │       │   └── ports/           # for-cart-store, for-sidebar-state
-│   │       ├── application/usecases/
-│   │       ├── infrastructure/
-│   │       │   ├── adapters/out/
-│   │       │   │   ├── CartState/   # cart-store + zustand-cart-adapter
-│   │       │   │   ├── SidebarState/
-│   │       │   │   ├── CloudinaryUpload/  # adapter de avatares
-│   │       │   │   └── Encrypt/     # bcrypt-validator-adapter
-│   │       │   └── persistence/prisma/   # schema + migraciones
-│   │       └── config/factory/
+│   │   ├── ui-state/
+│   │   │   ├── domain/
+│   │   │   │   ├── model/           # cart-product, address, document-upload, size
+│   │   │   │   └── ports/           # for-cart-store, for-sidebar-state, for-address-state,
+│   │   │   │                        #   for-document-upload, for-pdf-conversion
+│   │   │   ├── application/usecases/
+│   │   │   ├── infrastructure/
+│   │   │   │   ├── adapters/out/
+│   │   │   │   │   ├── CartState/   # cart-store + zustand-cart-adapter
+│   │   │   │   │   ├── SidebarState/
+│   │   │   │   │   ├── AddressState/# address-store + zustand-address-adapter
+│   │   │   │   │   ├── CloudinaryUpload/  # imágenes de perfil + documentos PDF
+│   │   │   │   │   ├── PdfConversion/     # pdfshift-document-converter-adapter
+│   │   │   │   │   └── Encrypt/     # bcrypt-validator-adapter
+│   │   │   │   └── persistence/prisma/   # schema + migraciones
+│   │   │   └── config/factory/
+│   │   └── validation/              # esquemas Zod compartidos (registro, dirección)
 │   └── orders/                      # (en preparación)
 ├── ui/
 │   ├── index.ts
 │   ├── components/                  # sidebar, top-menu, title, footer...
 │   └── features/
+│       ├── address/                 # AddressForm + actions (save/get/delete/countries)
 │       ├── cart/                    # CartItems + currency-format
-│       ├── checkout/                # CheckoutItems
+│       ├── checkout/                # CheckoutItems (carrito + dirección reales)
 │       ├── login/                   # actions/ + components/Login-form
 │       ├── orders/                  # OrdersItems
 │       ├── product/                 # actions/ + components/ + mappers/
 │       ├── products/                # ProductsGrid
+│       ├── profile/                 # página de perfil
 │       ├── register/                # actions/ + components/Register-form
 │       └── verify-email/            # actions/ + components/Verify-email-form
 └── src/
     ├── app/
     │   ├── layout.tsx               # Layout raíz (fonts, globals, metadata)
     │   ├── globals.css              # Tokens Tailwind v4 + estilos globales
-    │   ├── (shop)/                  # Tienda (home, productos, carrito, checkout...)
+    │   ├── (shop)/                  # Tienda (home, productos, carrito, checkout, profile...)
     │   └── auth/                    # login, new-account, verify-email
     ├── config/fonts.ts              # Inter + Montserrat Alternates (titleFont)
     └── seed/                        # Catálogo demo (reset + insert)
@@ -472,15 +512,22 @@ teslo-shop/
   producto consultan a través del caso de uso; `PrismaProductsHandler` cubre
   paginación, conteos, búsquedas por slug y stock. El seed puebla el catálogo.
 - **Carrito persistido en el cliente**: Zustand `persist` bajo
-  `shopping-cart`, leído por `CartItems`/`TopMenuCartCount` como única fuente
-  de verdad. El checkout todavía no está cableado a él.
+  `shopping-cart`, leído por `CartItems`/`TopMenuCartCount`/`CheckoutItems`
+  como única fuente de verdad vía `useSyncExternalStore`.
+- **Dirección de entrega**: formulario con validación Zod fail-closed
+  (client + server), prefill desde zustand/BD y persistencia por usuario
+  (`UserAddress`). El checkout muestrea la dirección desde el store.
 - **Registro y verificación de email**: flujo completo implementado
-  (registro → token → correo → verificación). Pendiente: completar el
-  `authorize()` de NextAuth para validar credenciales contra la base de datos
-  (hoy el login rechaza todo), crear la página `/auth/check-email`, conectar
-  `RegisterForm` a la action de registro, y verificar el envío real de correos
-  con Gmail.
-- Las rutas de órdenes/admin/checkout todavía muestran demo o placeholders.
+  (registro → token → correo → verificación). `authorize()` de NextAuth
+  valida credenciales contra la BD (`NextAuthAuthorize`). Pendiente: página
+  `/auth/check-email` (hoy el registro redirige a `/auth/login?registered=1`).
+- **Documentos / facturas (en curso)**: conversión HTML → PDF vía PDFShift
+  (sandbox en dev) y subida de PDFs a Cloudinary
+  (`CloudinaryDocumentUploadAdapter`, `resource_type: "raw"`). Pendiente:
+  template `invoice-email`, server action que orqueste factura → PDF →
+  Cloudinary → email, y la persistencia de la orden (modelos `Order`,
+  `OrderItem`, `OrderAddress` ya migrados).
+- Las rutas de órdenes/admin todavía muestran demo o placeholders.
 - Sin tests automatizados todavía (sin runner ni suite configurada).
 
 ---
