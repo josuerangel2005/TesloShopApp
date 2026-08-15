@@ -9,6 +9,7 @@ export * from "./features/cart";
 export * from "./features/checkout";
 export * from "./features/login";
 export * from "./features/orders";
+export * from "./features/address";
 export * from "./features/register";
 export * from "./features/verify-email";
 export * from "./features/profile";

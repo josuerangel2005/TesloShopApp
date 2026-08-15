@@ -97,18 +97,15 @@ export const AddressForm = async () => {
         </div>
 
         <div className="address-field flex flex-col gap-1.5">
-          <label
-            htmlFor="ciudad"
-            className="text-sm font-medium text-slate-700"
-          >
-            Ciudad
+          <label htmlFor="pais" className="text-sm font-medium text-slate-700">
+            País
           </label>
-          <select id="ciudad" defaultValue="" className={fieldClass}>
+          <select id="pais" defaultValue="" className={fieldClass}>
             <option value="" disabled>
-              Selecciona una ciudad
+              Selecciona un país
             </option>
             {countries.map((country) => (
-              <option key={country.id} value={country.name}>
+              <option key={country.id} value={country.id}>
                 {country.name}
               </option>
             ))}
