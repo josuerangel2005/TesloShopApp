@@ -11,8 +11,6 @@ export const saveUserAddressAction = async (
 ): Promise<void> => {
   const session = await getHandleAuthUseCase().getSession();
 
-  // Sin sesión no hay userId para persistir: igual se avanza al checkout
-  // (la dirección ya vive en zustand + localStorage del lado cliente)
   if (!session) {
     redirect("/checkout");
   }

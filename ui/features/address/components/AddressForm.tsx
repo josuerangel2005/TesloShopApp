@@ -8,9 +8,17 @@ import { Address } from "../../../../modules/shared/ui-state/domain/model/addres
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { getAddressByUserIdAction } from "../actions/get-address-by-user-id-action";
 import { addressResponseToAddress } from "../mapper/address.mapper";
+import { userAddressSchema } from "../../../../modules/shared/validation/domain/model/schemas";
 
 const fieldClass =
   "rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 transition-colors placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
+
+const FieldErrorMessage = ({ message }: { message?: string }) =>
+  message ? (
+    <p className="text-xs font-medium text-red-500" role="alert">
+      {message}
+    </p>
+  ) : null;
 
 interface Props {
   countries: CountryActionResponse[];
@@ -27,6 +35,7 @@ export const AddressForm = ({ countries }: Props) => {
 
   const router = useRouter();
   const [ready, setReady] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const fetchAddress = async () => {
@@ -63,6 +72,31 @@ export const AddressForm = ({ countries }: Props) => {
       phone: formData.get("phone")?.toString() ?? "",
       remember: formData.get("remember") === "on",
     };
+
+    // Validación estricta client-side: campos vacíos/inválidos bloquean el avance
+    const parsed = userAddressSchema.safeParse({
+      firstName: fields.firstName,
+      lastName: fields.lastName,
+      address: fields.address,
+      address2: fields.address2,
+      postalCode: fields.postalCode,
+      city: fields.city,
+      country: fields.country,
+      phone: fields.phone,
+    });
+
+    if (!parsed.success) {
+      setFieldErrors(
+        Object.fromEntries(
+          Object.entries(parsed.error.flatten().fieldErrors).map(
+            ([field, messages]) => [field, messages?.[0] ?? "Campo inválido"],
+          ),
+        ),
+      );
+      return;
+    }
+
+    setFieldErrors({});
 
     handleAddressStateUseCase.saveAddress(
       new Address(
@@ -111,6 +145,7 @@ export const AddressForm = ({ countries }: Props) => {
               placeholder="Juan"
               className={fieldClass}
             />
+            <FieldErrorMessage message={fieldErrors.firstName} />
           </div>
 
           <div className="address-field flex flex-col gap-1.5">
@@ -128,6 +163,7 @@ export const AddressForm = ({ countries }: Props) => {
               placeholder="Pérez"
               className={fieldClass}
             />
+            <FieldErrorMessage message={fieldErrors.lastName} />
           </div>
 
           <div className="address-field flex flex-col gap-1.5">
@@ -145,6 +181,7 @@ export const AddressForm = ({ countries }: Props) => {
               placeholder="Av. Principal 123"
               className={fieldClass}
             />
+            <FieldErrorMessage message={fieldErrors.address} />
           </div>
 
           <div className="address-field flex flex-col gap-1.5">
@@ -162,6 +199,7 @@ export const AddressForm = ({ countries }: Props) => {
               placeholder="Depto, oficina, piso"
               className={fieldClass}
             />
+            <FieldErrorMessage message={fieldErrors.address2} />
           </div>
 
           <div className="address-field flex flex-col gap-1.5">
@@ -179,6 +217,7 @@ export const AddressForm = ({ countries }: Props) => {
               placeholder="10101"
               className={fieldClass}
             />
+            <FieldErrorMessage message={fieldErrors.postalCode} />
           </div>
 
           <div className="address-field flex flex-col gap-1.5">
@@ -196,6 +235,7 @@ export const AddressForm = ({ countries }: Props) => {
               placeholder="San José"
               className={fieldClass}
             />
+            <FieldErrorMessage message={fieldErrors.city} />
           </div>
 
           <div className="address-field flex flex-col gap-1.5">
@@ -220,6 +260,7 @@ export const AddressForm = ({ countries }: Props) => {
                 </option>
               ))}
             </select>
+            <FieldErrorMessage message={fieldErrors.country} />
           </div>
           <div className="address-field flex flex-col gap-1.5">
             <label
@@ -236,6 +277,7 @@ export const AddressForm = ({ countries }: Props) => {
               placeholder="+506 8888 8888"
               className={fieldClass}
             />
+            <FieldErrorMessage message={fieldErrors.phone} />
           </div>
 
           <div className="address-field address-submit flex flex-col gap-5 sm:col-span-2">
