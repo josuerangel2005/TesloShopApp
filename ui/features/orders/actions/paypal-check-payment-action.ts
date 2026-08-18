@@ -1,5 +1,6 @@
 "use server";
 
+import { after } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getHandleOrdersUseCase } from "../../../../modules/orders/infrastructure/config/factory/handle-orders-use-case-factory";
 import { getHandleAuthUseCase } from "../../../../modules/auth";
@@ -59,9 +60,11 @@ export const paypalCheckPaymentAction = async (
 
     revalidatePath(`/orders/${orderId}`);
 
-    const emailResult = await sendInvoiceEmailAction(orderId);
-    if (emailResult && !emailResult.ok)
-      console.error(`Invoice email failed for order ${orderId}:`, emailResult);
+    after(async () => {
+      const emailResult = await sendInvoiceEmailAction(orderId);
+      if (emailResult && !emailResult.ok)
+        console.error(`Invoice email failed for order ${orderId}:`, emailResult);
+    });
 
     return {
       ok: true,
