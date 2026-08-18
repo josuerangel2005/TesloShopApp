@@ -4,6 +4,7 @@ import { IoSearchOutline } from "react-icons/io5";
 import { ScrollShadow } from "./ScrollShadow";
 import { OpenMenuButton } from "./OpenMenuButton";
 import { TopMenuCartCount } from "./TopMenuCartCount";
+import { TopMenuPendingOrdersCount } from "./TopMenuPendingOrdersCount";
 
 const categories = [
   { label: "Todos", href: "/" },
@@ -12,7 +13,11 @@ const categories = [
   { label: "Niños", href: "/category/kid" },
 ];
 
-export const TopMenu = () => {
+export const TopMenu = ({
+  pendingOrdersCount,
+}: {
+  pendingOrdersCount?: number;
+}) => {
   return (
     <ScrollShadow>
       <nav className="flex px-5 sm:px-8 justify-between items-center w-full min-h-16">

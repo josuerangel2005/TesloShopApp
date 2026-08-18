@@ -87,4 +87,8 @@ export class HandleAuthUseCase {
   public deleteAllUsers(): Promise<void> {
     return this.forAuth.deleteAllUsers();
   }
+
+  public deleteAllUserAddresses(): Promise<void> {
+    return this.forAuth.deleteAllUserAddresses();
+  }
 }

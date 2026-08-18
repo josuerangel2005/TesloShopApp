@@ -11,6 +11,9 @@ import {
 import { getHandleProductsInCartUseCase } from "../../../modules/shared/ui-state/infrastructure/config/factory/handle-products-in-cart-use-case-factory";
 import { CartProduct } from "../../../modules/shared/ui-state/domain/model/cart-product";
 import { getHandleAddressStateUseCase } from "../../../modules/shared/ui-state/infrastructure/config/factory/handle-address-state-use-case-factory";
+import { saveOrderAction } from "./actions/save-order-action";
+import { addressToCheckoutAddress } from "./mapper/checkout-address.mapper";
+import { cartProductsToCheckoutCartProducts } from "./mapper/checkout-cart-product.mapper";
 
 const usd = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -27,12 +30,7 @@ export const CheckoutItems = () => {
   const handleAddressStateUseCase = getHandleAddressStateUseCase();
 
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
-
-  const onPlaceOrder = async () => {
-    setIsPlacingOrder(true);
-
-    //regirigir
-  };
+  const [orderError, setOrderError] = useState<string | null>(null);
 
   const address = useSyncExternalStore(
     (listener) => handleAddressStateUseCase.subscribe(listener),
@@ -58,6 +56,24 @@ export const CheckoutItems = () => {
   );
   const tax = Math.round(subtotal * TAX_RATE);
   const total = subtotal + tax;
+
+  const onPlaceOrder = async () => {
+    if (!address || !products) return;
+
+    setIsPlacingOrder(true);
+    setOrderError(null);
+
+    const result = await saveOrderAction(
+      addressToCheckoutAddress(address),
+      cartProductsToCheckoutCartProducts(products),
+    );
+
+    if (!result.ok && result.kind === "user") {
+      setOrderError(result.message);
+    }
+
+    setIsPlacingOrder(false);
+  };
 
   return (
     <div className="grid grid-cols-1 gap-10 sm:grid-cols-2">
@@ -219,6 +235,12 @@ export const CheckoutItems = () => {
         >
           Colocar Orden
         </button>
+
+        {orderError && (
+          <p className="mt-3 text-center text-sm font-medium text-red-600">
+            {orderError}
+          </p>
+        )}
       </div>
     </div>
   );

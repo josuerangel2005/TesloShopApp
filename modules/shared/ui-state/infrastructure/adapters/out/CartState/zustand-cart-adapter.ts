@@ -6,10 +6,15 @@ import { persist } from "zustand/middleware";
 interface State {
   productsInCart: CartProduct[];
   addProductToCart: (product: CartProduct) => void;
-  updateProductQuantity: (productId: string, size: Size, quantity: number) => void;
+  updateProductQuantity: (
+    productId: string,
+    size: Size,
+    quantity: number,
+  ) => void;
   removeProductFromCart: (productId: string, size: Size) => void;
   getTotalProductsInCart: () => number;
   getAllProductsInCart: () => CartProduct[];
+  removeAllProductsInCart: () => void;
 }
 
 interface PersistedCartProduct {
@@ -87,7 +92,11 @@ export const cartStore = create<State>()(
         });
       },
 
-      updateProductQuantity: (productId: string, size: Size, quantity: number): void => {
+      updateProductQuantity: (
+        productId: string,
+        size: Size,
+        quantity: number,
+      ): void => {
         const { productsInCart } = get();
 
         const clamped = Math.max(quantity, 1);
@@ -117,6 +126,11 @@ export const cartStore = create<State>()(
           productsInCart: productsInCart.filter(
             (item) => !(item.getId() === productId && item.getSize() === size),
           ),
+        });
+      },
+      removeAllProductsInCart: () => {
+        set({
+          productsInCart: [],
         });
       },
     }),

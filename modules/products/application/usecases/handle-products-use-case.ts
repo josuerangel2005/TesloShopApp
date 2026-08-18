@@ -66,6 +66,10 @@ export class HandleProductsUseCase {
     return this.forHandleProducts.getProductBySlug(slug);
   }
 
+  public getProductsByIds(ids: string[]): Promise<Product[]> {
+    return this.forHandleProducts.getProductsByIds(ids);
+  }
+
   public getStockByProductSlug(slug: string): Promise<number> {
     return this.forHandleProducts.getStockByProductSlug(slug);
   }

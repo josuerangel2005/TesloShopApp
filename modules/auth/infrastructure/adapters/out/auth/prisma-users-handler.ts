@@ -214,4 +214,14 @@ export class PrismaUserHandler implements ForAuth {
       );
     }
   }
+
+  async deleteAllUserAddresses(): Promise<void> {
+    try {
+      await this.prismaClient.userAddress.deleteMany();
+    } catch (error) {
+      throw new UserPersistenceException(
+        `Failed to delete user addresses: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
 }

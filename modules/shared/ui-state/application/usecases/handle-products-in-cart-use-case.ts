@@ -36,4 +36,8 @@ export class HandleProductsInCartUseCase {
   public getAllProductsInCart(): CartProduct[] {
     return this.forCartStore.getAllProductsInCart();
   }
+
+  public removeAllProductsInCart(): void {
+    return this.forCartStore.removeAllProductsInCart();
+  }
 }

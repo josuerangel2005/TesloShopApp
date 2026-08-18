@@ -15,7 +15,9 @@ export class CartStore implements ForCartStore {
   }
 
   updateProductQuantity(productId: string, size: Size, quantity: number): void {
-    this.zustandCartStore.getState().updateProductQuantity(productId, size, quantity);
+    this.zustandCartStore
+      .getState()
+      .updateProductQuantity(productId, size, quantity);
   }
 
   removeProductFromCart(productId: string, size: Size): void {
@@ -32,5 +34,9 @@ export class CartStore implements ForCartStore {
 
   getAllProductsInCart(): CartProduct[] {
     return this.zustandCartStore.getState().getAllProductsInCart();
+  }
+
+  removeAllProductsInCart(): void {
+    return this.zustandCartStore.getState().removeAllProductsInCart();
   }
 }

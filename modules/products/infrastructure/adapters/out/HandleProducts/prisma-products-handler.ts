@@ -28,11 +28,10 @@ export class PrismaProductsHandler implements ForHandleProducts {
 
   public async deleteAll(): Promise<void> {
     try {
-      await Promise.all([
-        prisma.product.deleteMany(),
-        prisma.productImage.deleteMany(),
-        prisma.category.deleteMany(),
-      ]);
+      // Orden por FK: imagenes -> productos -> categorias
+      await prisma.productImage.deleteMany();
+      await prisma.product.deleteMany();
+      await prisma.category.deleteMany();
     } catch (error) {
       throw new ProductsPersistenceException(
         `Failed to delete all products: ${error instanceof Error ? error.message : String(error)}`,
@@ -240,6 +239,27 @@ export class PrismaProductsHandler implements ForHandleProducts {
         throw error;
       throw new ProductsPersistenceException(
         `Failed to get products by slug: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  public async getProductsByIds(ids: string[]): Promise<Product[]> {
+    try {
+      const rows = await this.prismaClient.product.findMany({
+        where: {
+          id: { in: ids },
+        },
+        include: { category: true, productImages: true },
+      });
+      return rows.map((row) => productRowToDomain(row));
+    } catch (error) {
+      if (
+        error instanceof CategoryNotExistsException ||
+        error instanceof ProductsPersistenceException
+      )
+        throw error;
+      throw new ProductsPersistenceException(
+        `Failed to get products by ids: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }

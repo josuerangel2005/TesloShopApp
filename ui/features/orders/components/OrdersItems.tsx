@@ -6,10 +6,14 @@ import {
   IoLocationOutline,
   IoShirtOutline,
 } from "react-icons/io5";
-import { type Product } from "../../product";
+import { getOrderByIdAction } from "../actions/get-order-by-id-action";
+import { Order } from "../interfaces/order";
+import { getProductsByIdsAction } from "../actions/get-products-by-ids-action";
+import { getCountryByCodeAction } from "../actions/get-country-by-code-action";
+import { PayOrderButton } from "./PayOrderButton";
 
 interface Props {
-  products: Product[];
+  id: string;
 }
 
 const usd = new Intl.NumberFormat("en-US", {
@@ -19,20 +23,21 @@ const usd = new Intl.NumberFormat("en-US", {
 
 const TAX_RATE = 0.15;
 
-export const OrdersItems = ({ products }: Props) => {
-  const quantities = products.reduce<Record<string, number>>((acc, product) => {
-    acc[product.slug] = 1;
-    return acc;
-  }, {});
-
-  const inCart = products.filter((product) => product.slug in quantities);
-
-  const totalItems = inCart.reduce(
-    (sum, product) => sum + quantities[product.slug],
-    0,
+export const OrdersItems = async ({ id }: Props) => {
+  const products: Order = await getOrderByIdAction(id);
+  const initialProducts = await getProductsByIdsAction(
+    products.orderItems.map((p) => p.productId),
   );
+  const address = products.orderAddress;
+  const country = address
+    ? await getCountryByCodeAction(address.countryId)
+    : null;
+
+  const inCart = products.orderItems;
+
+  const totalItems = inCart.reduce((sum, product) => sum + product.quantity, 0);
   const subtotal = inCart.reduce(
-    (sum, product) => sum + product.price * quantities[product.slug],
+    (sum, product) => sum + product.price * product.quantity,
     0,
   );
   const tax = Math.round(subtotal * TAX_RATE);
@@ -42,19 +47,41 @@ export const OrdersItems = ({ products }: Props) => {
     <div className="grid grid-cols-1 gap-10 sm:grid-cols-2">
       {/* Items */}
       <div className="flex flex-col">
-        <div className="mb-5 flex items-center gap-3 rounded-xl bg-emerald-50 px-4 py-3 ring-1 ring-emerald-200">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white">
-            <IoCheckmarkCircleOutline size={22} />
-          </span>
-          <div>
-            <p className="text-sm font-semibold text-emerald-800">
-              Orden pagada
-            </p>
-            <p className="text-xs text-emerald-600">
-              ID de transacción: TS-10293
-            </p>
+        {products.isPaid ? (
+          <div className="mb-5 flex items-center gap-3 rounded-xl bg-emerald-50 px-4 py-3 ring-1 ring-emerald-200">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white">
+              <IoCheckmarkCircleOutline size={22} />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-emerald-800">
+                Orden pagada
+              </p>
+              <p className="text-xs text-emerald-600">
+                {products.paidAt
+                  ? new Date(products.paidAt).toLocaleDateString("es-MX", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })
+                  : "Pago confirmado"}
+              </p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="mb-5 flex items-center gap-3 rounded-xl bg-red-50 px-4 py-3 ring-1 ring-red-200">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-red-600 text-white">
+              <IoCardOutline size={22} />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-red-800">
+                Pendiente de pago
+              </p>
+              <p className="text-xs text-red-600">
+                Esta orden aún no ha sido pagada
+              </p>
+            </div>
+          </div>
+        )}
 
         {inCart.length === 0 ? (
           <div className="rounded-xl border border-slate-200 bg-white p-10 text-center">
@@ -65,44 +92,52 @@ export const OrdersItems = ({ products }: Props) => {
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            {inCart.map((product) => (
-              <div
-                key={product.slug}
-                className="flex gap-4 rounded-xl border border-slate-200 bg-white p-4 transition-shadow hover:shadow-md"
-              >
-                <Image
-                  src={`/products/${product.images[0]}`}
-                  alt={product.title}
-                  width={100}
-                  height={100}
-                  className="size-[100px] rounded-lg object-cover"
-                />
+            {initialProducts.map((product) => {
+              const productInCart = inCart.find(
+                (p) => p.productId === product.id,
+              );
 
-                <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
-                  <p className="truncate font-medium text-slate-800">
-                    {product.title}
-                  </p>
+              return (
+                <div
+                  key={product.slug}
+                  className="flex gap-4 rounded-xl border border-slate-200 bg-white p-4 transition-shadow hover:shadow-md"
+                >
+                  <Image
+                    src={`/products/${product.images[0]}`}
+                    alt={product.title}
+                    width={100}
+                    height={100}
+                    className="size-[100px] rounded-lg object-cover"
+                  />
 
-                  <div className="flex items-center gap-4 text-sm text-slate-500">
-                    <span className="flex items-center gap-1">
-                      <IoShirtOutline size={16} className="text-slate-400" />
-                      Talla:{" "}
-                      <span className="font-medium">{product.sizes[0]}</span>
-                    </span>
-                    <span>
-                      Cant.:{" "}
-                      <span className="font-medium">
-                        {quantities[product.slug]}
+                  <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
+                    <p className="truncate font-medium text-slate-800">
+                      {product.title}
+                    </p>
+
+                    <div className="flex items-center gap-4 text-sm text-slate-500">
+                      <span className="flex items-center gap-1">
+                        <IoShirtOutline size={16} className="text-slate-400" />
+                        Talla:{" "}
+                        <span className="font-medium">
+                          {productInCart?.size}
+                        </span>
                       </span>
-                    </span>
-                  </div>
+                      <span>
+                        Cant.:{" "}
+                        <span className="font-medium">
+                          {productInCart?.quantity}
+                        </span>
+                      </span>
+                    </div>
 
-                  <p className="text-base font-semibold text-slate-900">
-                    {usd.format(product.price)}
-                  </p>
+                    <p className="text-base font-semibold text-slate-900">
+                      {usd.format(product.price)}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -119,14 +154,17 @@ export const OrdersItems = ({ products }: Props) => {
               Dirección de Entrega
             </h2>
             <div className="mt-3 space-y-1 text-sm">
-              <p className="font-medium text-slate-800">Josué Rangel</p>
-              <p className="text-slate-500">Av. Siempre Viva 123</p>
-              <p className="text-slate-500">
-                Col. Centro · Alcaldía Cuauhtémoc
+              <p className="font-medium text-slate-800">
+                {address?.firstName} {address?.lastName}
               </p>
-              <p className="text-slate-500">Ciudad de México</p>
-              <p className="text-slate-500">CP. 1010123</p>
-              <p className="text-slate-500">12312328</p>
+
+              <p className="text-slate-500">{address?.address}</p>
+              <p className="text-slate-500">{address?.city}</p>
+              <p className="text-slate-500">
+                {country?.name ?? address?.countryId}
+              </p>
+              <p className="text-slate-500">{address?.postalCode}</p>
+              <p className="text-slate-500">{address?.phone}</p>
             </div>
           </div>
         </div>
@@ -167,16 +205,32 @@ export const OrdersItems = ({ products }: Props) => {
           </span>
         </div>
 
-        <div className="mt-6 flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3 ring-1 ring-slate-200">
-          <IoCardOutline size={22} className="shrink-0 text-slate-400" />
-          <p className="text-xs leading-relaxed text-slate-500">
-            Pagado con tarjeta de crédito · Visa terminada en 4242.
-          </p>
-        </div>
+        {products.isPaid ? (
+          <div className="mt-6 flex items-center gap-3 rounded-xl bg-emerald-50 px-4 py-3 ring-1 ring-emerald-200">
+            <IoCheckmarkCircleOutline
+              size={22}
+              className="shrink-0 text-emerald-600"
+            />
+            <p className="text-xs leading-relaxed text-emerald-700">
+              Pago confirmado, pronto recibirás tu factura por correo. ¡Gracias
+              por tu compra!
+            </p>
+          </div>
+        ) : (
+          <div className="mt-6 flex items-center gap-3 rounded-xl bg-red-50 px-4 py-3 ring-1 ring-red-200">
+            <IoCardOutline size={22} className="shrink-0 text-red-500" />
+            <p className="text-xs leading-relaxed text-red-600">
+              El pago está pendiente. Una vez confirmado, recibirás tu factura
+              por correo.
+            </p>
+          </div>
+        )}
 
-        <Link href="/" className="btn-primary mt-6 w-full text-center">
-          Volver a la tienda
-        </Link>
+        {!products.isPaid && (
+          <div className="mt-5">
+            <PayOrderButton orderId={products.id} amount={products.total} />
+          </div>
+        )}
       </div>
     </div>
   );

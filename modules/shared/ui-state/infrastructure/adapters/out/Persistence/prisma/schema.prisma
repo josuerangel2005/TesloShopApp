@@ -112,7 +112,7 @@ model Order {
   tax          Float
   total        Float
   itemsInOrder Int
-  isPaid       Boolean
+  isPaid       Boolean   @default(false)
   paidAt       DateTime?
 
   createdAt DateTime @default(now())
@@ -123,6 +123,8 @@ model Order {
   userId         String
   orderItems     OrderItem[]
   orderAddresses OrderAddress?
+
+  transactionId String?
 }
 
 model OrderItem {

@@ -9,13 +9,18 @@ import {
 } from "./mappers/seed-product.mapper";
 import { getHandleAuthUseCase } from "../../modules/auth";
 import { getHandleCountriesUseCase } from "../../modules/geography/infrastructure/config/factory/handle-countries-use-case-factory";
+import { getHandleOrdersUseCase } from "../../modules/orders/infrastructure/config/factory/handle-orders-use-case-factory";
 
 async function main() {
   const handleProductsUseCase = getHandleProductsUseCase();
   const handleAuthUseCase = getHandleAuthUseCase();
   const handleCountriesUseCase = getHandleCountriesUseCase();
+  const handleOrdersUseCase = getHandleOrdersUseCase();
 
-  // Borrar todos los registros de base de datos
+  // Borrar todos los registros de base de datos (orden por FK: items -> direcciones -> ordenes -> productos)
+  await handleOrdersUseCase.deleteAllOrderItems();
+  await handleOrdersUseCase.deleteAllOrderAddress();
+  await handleOrdersUseCase.deleteAllOrders();
   await handleProductsUseCase.deleteAll();
 
   const { categories, products, users, countries } = initialData;
@@ -56,6 +61,7 @@ async function main() {
   );
 
   //Persistir usuarios
+  await handleAuthUseCase.deleteAllUserAddresses();
   await handleAuthUseCase.deleteAllUsers();
   await handleAuthUseCase.saveAllUsersSeed(users.map(toUserSeedSaveCommand));
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { inter } from "@/config/fonts";
 import { ToastProvider } from "../../ui";
+import { PaypalProvider } from "../../ui/components/paypal";
 
 export const metadata: Metadata = {
   title: {
@@ -17,8 +18,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body
         className={`min-h-full flex flex-col overflow-x-hidden ${inter.className}`}
       >
-        <ToastProvider />
-        {children}
+        <PaypalProvider>
+          <ToastProvider />
+          {children}
+        </PaypalProvider>
       </body>
     </html>
   );

@@ -17,4 +17,5 @@ export interface ForAuth {
   //for seed
   saveAllUsersSeed: (users: UserSeedSaveCommand[]) => Promise<void>;
   deleteAllUsers: () => Promise<void>;
+  deleteAllUserAddresses: () => Promise<void>;
 }

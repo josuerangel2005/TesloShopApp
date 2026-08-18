@@ -17,6 +17,10 @@ export class HandleCountriesUseCase {
     return this.forHandleCountries.getAllCountries();
   }
 
+  public getCountryByCode(countryId: string): Promise<Country | null> {
+    return this.forHandleCountries.getCountryByCode(countryId);
+  }
+
   public deleteAllCountries(): Promise<void> {
     return this.forHandleCountries.deleteAllCountries();
   }

@@ -50,6 +50,19 @@ export class PrismaCountryHandler implements ForHandleCountries {
     }
   }
 
+  async getCountryByCode(countryId: string): Promise<Country | null> {
+    try {
+      const data = await this.prismaClient.country.findUnique({
+        where: { countryId },
+      });
+      return data ? new Country(data.id, data.name, data.countryId) : null;
+    } catch (error) {
+      throw new CountryPersistenceErrorException(
+        `Failed to get country by code: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
   async deleteAllCountries(): Promise<void> {
     try {
       await this.prismaClient.country.deleteMany();

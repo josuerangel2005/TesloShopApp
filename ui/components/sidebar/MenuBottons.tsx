@@ -40,15 +40,6 @@ export const MenuButtons = ({ isAuthenticated, rol }: Props) => {
         <IoPersonOutline size={30} />
         <span className="ml-5 text-xl">Perfil</span>
       </Link>
-      <Link
-        href={"/"}
-        className="flex items-center mt-10 p-2 hover:bg-gray-100 rounded transition-all"
-
-        onClick={() => handleOnClick()}
-      >
-        <IoTicketOutline size={30} />
-        <span className="ml-5 text-xl">Órdenes</span>
-      </Link>
       {isAuthenticated ? (
         <Link
           href={"/"}
@@ -86,13 +77,13 @@ export const MenuButtons = ({ isAuthenticated, rol }: Props) => {
             <span className="ml-5 text-xl">Products</span>
           </Link>
           <Link
-            href={"/"}
+            href={"/orders"}
             className="flex items-center mt-10 p-2 hover:bg-gray-100 rounded transition-all"
 
             onClick={() => handleOnClick()}
           >
             <IoTicketOutline size={30} />
-            <span className="ml-5 text-xl">Órdenes</span>
+            <span className="ml-5 text-xl">Todas las Órdenes</span>
           </Link>
           <Link
             href={"/"}

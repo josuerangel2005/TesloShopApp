@@ -21,5 +21,6 @@ export interface ForHandleProducts {
   saveAllProducts: (products: ProductSaveCommand[]) => Promise<void>;
   getQuantityProductsByGender: (gender: Gender) => Promise<number>;
   getProductBySlug: (slug: string) => Promise<Product>;
+  getProductsByIds: (ids: string[]) => Promise<Product[]>;
   getStockByProductSlug: (slug: string) => Promise<number>;
 }

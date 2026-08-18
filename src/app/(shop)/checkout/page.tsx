@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { initialData } from "@/seed/seed";
 import { CheckoutItems, Title } from "../../../../ui";
 
 export const metadata: Metadata = {
