@@ -5,6 +5,8 @@ import { ScrollShadow } from "./ScrollShadow";
 import { OpenMenuButton } from "./OpenMenuButton";
 import { TopMenuCartCount } from "./TopMenuCartCount";
 import { TopMenuPendingOrdersCount } from "./TopMenuPendingOrdersCount";
+import { getHandleAuthUseCase } from "../../../modules/auth";
+import { TopMenuPendingOrdersBadge } from "./TopMenuPendingOrdersBadge";
 
 const categories = [
   { label: "Todos", href: "/" },
@@ -13,11 +15,12 @@ const categories = [
   { label: "Niños", href: "/category/kid" },
 ];
 
-export const TopMenu = ({
+export const TopMenu = async ({
   pendingOrdersCount,
 }: {
   pendingOrdersCount?: number;
 }) => {
+  const user = await getHandleAuthUseCase().getCurrentUser();
   return (
     <ScrollShadow>
       <nav className="flex px-5 sm:px-8 justify-between items-center w-full min-h-16">
@@ -56,6 +59,12 @@ export const TopMenu = ({
           >
             <IoSearchOutline className="w-5 h-5" />
           </Link>
+
+          {user?.getRole() !== "ADMIN" && (
+            <TopMenuPendingOrdersBadge
+              pendingOrders={pendingOrdersCount ?? 0}
+            />
+          )}
 
           <TopMenuCartCount />
 

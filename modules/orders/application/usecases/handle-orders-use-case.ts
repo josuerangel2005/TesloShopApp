@@ -11,8 +11,12 @@ export class HandleOrdersUseCase {
     this.forHandleOrders = forHandleOrders;
   }
 
-  public getAllOrders(): Promise<Order[]> {
-    return this.forHandleOrders.getAllOrders();
+  public getAllOrders(page: number, take: number): Promise<Order[]> {
+    return this.forHandleOrders.getAllOrders(page, take);
+  }
+
+  public getNumberOfAllOrders(): Promise<number> {
+    return this.forHandleOrders.getNumberOfAllOrders();
   }
 
   public saveOrder(order: OrderSaveCommand): Promise<string> {
@@ -31,8 +35,16 @@ export class HandleOrdersUseCase {
     return this.forHandleOrders.deleteAllOrderItems();
   }
 
-  public getOrdersByUserId(userId: string): Promise<Order[]> {
-    return this.forHandleOrders.getOrdersByUserId(userId);
+  public getOrdersByUserId(
+    userId: string,
+    page: number,
+    take: number,
+  ): Promise<Order[]> {
+    return this.forHandleOrders.getOrdersByUserId(userId, page, take);
+  }
+
+  public getNumberOfOrdersByUserId(userId: string): Promise<number> {
+    return this.forHandleOrders.getNumberOfOrdersByUserId(userId);
   }
 
   public getPendingOrdersCountByUserId(userId: string): Promise<number> {
@@ -67,5 +79,25 @@ export class HandleOrdersUseCase {
 
   public updatePaymentStatus(orderId: string): Promise<void> {
     return this.forHandleOrders.updatePaymentStatus(orderId);
+  }
+
+  public getAllPendingOrdersByUserId(
+    userId: string,
+    page: number,
+    take: number,
+  ): Promise<Order[]> {
+    return this.forHandleOrders.getAllPendingOrdersByUserId(
+      userId,
+      page,
+      take,
+    );
+  }
+
+  public getPaidOrdersByUserId(
+    userId: string,
+    page: number,
+    take: number,
+  ): Promise<Order[]> {
+    return this.forHandleOrders.getPaidOrdersByUserId(userId, page, take);
   }
 }

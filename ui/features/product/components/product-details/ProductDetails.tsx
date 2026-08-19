@@ -32,6 +32,7 @@ export const ProductDetails = ({ product }: Props) => {
     );
 
     handleProductsInCartUseCase.saveProductInCart(cartProduct);
+    setQuantity(0);
   };
 
   return (

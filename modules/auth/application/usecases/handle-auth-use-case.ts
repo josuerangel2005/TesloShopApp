@@ -5,7 +5,6 @@ import { User } from "../../domain/model/user";
 import { ForAuth } from "../../domain/ports/driven/for-auth";
 import { ForAuthSession } from "../../domain/ports/driven/for-auth-session";
 import { VerificationTokenExpiredException } from "../../domain/error/verification-token-expired-exception";
-import { VerificationTokenInvalidException } from "../../domain/error/verification-token-invalid-exception";
 import { UserNotExistsException } from "../../domain/error/user-not-exists-exception";
 import { UserSeedSaveCommand } from "../../domain/model/commands/user-seed-save-command";
 

@@ -14,6 +14,8 @@ import { getHandleAddressStateUseCase } from "../../../modules/shared/ui-state/i
 import { saveOrderAction } from "./actions/save-order-action";
 import { addressToCheckoutAddress } from "./mapper/checkout-address.mapper";
 import { cartProductsToCheckoutCartProducts } from "./mapper/checkout-cart-product.mapper";
+import { useRouter } from "next/navigation";
+import { getHandlePendingNumberOrdersFactory } from "../../../modules/shared/ui-state/infrastructure/config/factory/handle-pending-number-orders-factory";
 
 const usd = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -29,6 +31,8 @@ export const CheckoutItems = () => {
 
   const handleAddressStateUseCase = getHandleAddressStateUseCase();
 
+  const handlePendingNumberOrdes = getHandlePendingNumberOrdersFactory();
+
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
 
@@ -43,6 +47,8 @@ export const CheckoutItems = () => {
     () => storeApi.getAllProductsInCart(),
     () => EMPTY_CART,
   );
+
+  const router = useRouter();
 
   const inCart = products;
 
@@ -68,11 +74,16 @@ export const CheckoutItems = () => {
       cartProductsToCheckoutCartProducts(products),
     );
 
-    if (!result.ok && result.kind === "user") {
+    if (result.ok === false && result.kind === "user") {
       setOrderError(result.message);
+      return;
+    } else if (result.ok === false && result.kind === "system") return;
+    else {
+      router.push(`/orders/${result.orderId}`);
+      storeApi.removeAllProductsInCart();
+      handlePendingNumberOrdes.addPendingOrder();
+      setIsPlacingOrder(false);
     }
-
-    setIsPlacingOrder(false);
   };
 
   return (

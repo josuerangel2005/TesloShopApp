@@ -6,7 +6,9 @@ import { getHandleOrdersUseCase } from "../../../../modules/orders/infrastructur
 
 export const deleteOrderAction = async (
   orderId: string,
-): Promise<{ ok: boolean; message?: string }> => {
+): Promise<
+  { ok: false; message?: string } | { ok: true; remaining: number }
+> => {
   try {
     const session = await getHandleAuthUseCase().getSession();
     if (!session) return { ok: false, message: "Debes iniciar sesión" };
@@ -20,13 +22,22 @@ export const deleteOrderAction = async (
       isAdmin,
     );
 
-    revalidatePath("/profile");
-    revalidatePath("/orders");
-    return { ok: true };
+    const remaining =
+      await getHandleOrdersUseCase().getPendingOrdersCountByUserId(
+        session.getId(),
+      );
+
+    if (remaining !== 0) {
+      revalidatePath("/profile");
+      revalidatePath("/orders");
+    }
+
+    return { ok: true, remaining };
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Error al eliminar la orden",
+      message:
+        error instanceof Error ? error.message : "Error al eliminar la orden",
     };
   }
 };

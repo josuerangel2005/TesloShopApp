@@ -1,29 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { IoTrashOutline } from "react-icons/io5";
 import { deleteOrderAction } from "../actions/delete-order-action";
+import { getHandlePendingNumberOrdersFactory } from "../../../../modules/shared/ui-state/infrastructure/config/factory/handle-pending-number-orders-factory";
 
 interface Props {
   orderId: string;
 }
 
 export const DeleteOrderButton = ({ orderId }: Props) => {
-  const router = useRouter();
   const [isPending, setIsPending] = useState(false);
+  const handlePendingNumberOrdes = getHandlePendingNumberOrdersFactory();
+  const router = useRouter();
+  const path = usePathname();
 
   const handleDelete = async () => {
     setIsPending(true);
-    try {
-      const result = await deleteOrderAction(orderId);
-      if (result.ok) {
-        router.refresh();
-      } else {
-        alert(result.message);
-      }
-    } finally {
+    const result = await deleteOrderAction(orderId);
+
+    if (result.ok) {
+      handlePendingNumberOrdes.deletePendingOrder();
       setIsPending(false);
+      if (result.remaining === 0) router.push("/");
+    } else {
+      console.log(result.message);
     }
   };
 

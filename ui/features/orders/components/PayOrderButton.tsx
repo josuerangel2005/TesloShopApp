@@ -10,6 +10,7 @@ import {
 import { setTransactionIdAction } from "../actions/set-transaction-id-action";
 import { paypalCheckPaymentAction } from "../actions/paypal-check-payment-action";
 import { getHandleProductsInCartUseCase } from "../../../../modules/shared/ui-state/infrastructure/config/factory/handle-products-in-cart-use-case-factory";
+import { getHandlePendingNumberOrdersFactory } from "../../../../modules/shared/ui-state/infrastructure/config/factory/handle-pending-number-orders-factory";
 
 interface Props {
   orderId: string;
@@ -56,6 +57,7 @@ export const PayOrderButton = ({ orderId, amount }: Props) => {
   const onApprove = async (data: OnApproveData, actions: OnApproveActions) => {
     const details = await actions.order?.capture();
     const handleProductsInCartUseCase = getHandleProductsInCartUseCase();
+    const handlePendingNumberOrdes = getHandlePendingNumberOrdersFactory();
 
     if (!details) return;
 
@@ -63,6 +65,7 @@ export const PayOrderButton = ({ orderId, amount }: Props) => {
 
     if (result.ok) {
       handleProductsInCartUseCase.removeAllProductsInCart();
+      handlePendingNumberOrdes.deletePendingOrder();
     }
   };
 

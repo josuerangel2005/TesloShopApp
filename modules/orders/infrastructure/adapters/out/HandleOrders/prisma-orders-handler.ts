@@ -10,7 +10,8 @@ import { ForHandleOrders } from "../../../../domain/ports/driven/for-handle-orde
 import { toOrderDomainMapper } from "./utils/mappers/to-order-domain-mapper";
 import { Prisma } from "@/generated/prisma/client";
 import { OrderWithIdNotExistsException } from "../../../../domain/error/order-with-id-not-exists-exception";
-import { OrderNotExistsException } from "../../../../domain/error/order-not-exists-exception";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
+import { UserWithIdNotExistsException } from "../../../../../auth/domain/error/user-with-id-not-exists-exception";
 
 export class PrismaOrdersHandler implements ForHandleOrders {
   private readonly prismaClient: typeof prisma;
@@ -19,10 +20,12 @@ export class PrismaOrdersHandler implements ForHandleOrders {
     this.prismaClient = prismaClient;
   }
 
-  async getAllOrders(): Promise<Order[]> {
+  async getAllOrders(page: number, take: number): Promise<Order[]> {
     try {
       return (
         await this.prismaClient.order.findMany({
+          take,
+          skip: (page - 1) * take,
           include: {
             orderItems: true,
             orderAddresses: { include: { country: true } },
@@ -32,6 +35,16 @@ export class PrismaOrdersHandler implements ForHandleOrders {
     } catch (error) {
       throw new PersisteOrderErrorException(
         `Error to find all orders: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  async getNumberOfAllOrders(): Promise<number> {
+    try {
+      return await this.prismaClient.order.count();
+    } catch (error) {
+      throw new PersisteOrderErrorException(
+        `Error to find orders count: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }
@@ -183,10 +196,16 @@ export class PrismaOrdersHandler implements ForHandleOrders {
     }
   }
 
-  async getOrdersByUserId(userId: string): Promise<Order[]> {
+  async getOrdersByUserId(
+    userId: string,
+    page: number,
+    take: number,
+  ): Promise<Order[]> {
     try {
       return (
         await this.prismaClient.order.findMany({
+          take,
+          skip: (page - 1) * take,
           where: { userId },
           include: {
             orderItems: true,
@@ -197,6 +216,23 @@ export class PrismaOrdersHandler implements ForHandleOrders {
     } catch (error) {
       throw new PersisteOrderErrorException(
         `Error to find order with userId ${userId}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  async getNumberOfOrdersByUserId(userId: string): Promise<number> {
+    try {
+      return await this.prismaClient.order.count({
+        where: { userId },
+      });
+    } catch (error) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === "2025"
+      )
+        throw new UserWithIdNotExistsException(userId);
+      throw new PersisteOrderErrorException(
+        `Error to find orders count with userId ${userId}: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }
@@ -301,6 +337,70 @@ export class PrismaOrdersHandler implements ForHandleOrders {
 
       throw new PersisteOrderErrorException(
         `Failed to update payment status where orderId is: ${orderId}, ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  async getAllPendingOrdersByUserId(
+    userId: string,
+    page: number,
+    take: number,
+  ): Promise<Order[]> {
+    try {
+      return (
+        await this.prismaClient.order.findMany({
+          take,
+          skip: (page - 1) * take,
+          where: {
+            userId,
+            isPaid: false,
+          },
+          include: {
+            orderItems: true,
+            orderAddresses: { include: { country: true } },
+          },
+        })
+      ).map(toOrderDomainMapper);
+    } catch (error) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === "2025"
+      )
+        throw new UserWithIdNotExistsException(userId);
+      throw new PersisteOrderErrorException(
+        `Error to find all orders: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  async getPaidOrdersByUserId(
+    userId: string,
+    page: number,
+    take: number,
+  ): Promise<Order[]> {
+    try {
+      return (
+        await this.prismaClient.order.findMany({
+          take,
+          skip: (page - 1) * take,
+          where: {
+            userId,
+            isPaid: true,
+          },
+          include: {
+            orderItems: true,
+            orderAddresses: { include: { country: true } },
+          },
+        })
+      ).map(toOrderDomainMapper);
+    } catch (error) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === "2025"
+      )
+        throw new UserWithIdNotExistsException(userId);
+      throw new PersisteOrderErrorException(
+        `Error to find all orders: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }

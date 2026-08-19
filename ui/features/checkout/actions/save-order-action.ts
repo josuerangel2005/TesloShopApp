@@ -14,7 +14,7 @@ import { ProductNotExistsException } from "../../../../modules/orders/domain/err
 import { PersisteOrderErrorException } from "../../../../modules/orders/domain/error/persistence-order-error-exception";
 
 export type SaveOrderActionResult =
-  | { ok: true }
+  | { ok: true; orderId: string }
   | { ok: false; kind: "user"; message: string }
   | { ok: false; kind: "system" };
 
@@ -35,7 +35,9 @@ export const saveOrderAction = async (
     };
   }
 
-  if (cart.some((item) => !Number.isInteger(item.quantity) || item.quantity < 1))
+  if (
+    cart.some((item) => !Number.isInteger(item.quantity) || item.quantity < 1)
+  )
     return {
       ok: false,
       kind: "user",
@@ -67,6 +69,8 @@ export const saveOrderAction = async (
     orderId = await handleOrdersUseCase.saveOrder(
       new OrderSaveCommand(user.getId(), orderItems, orderAddress),
     );
+
+    return { ok: true, orderId };
   } catch (error) {
     if (error instanceof ProductQuantityZeroException) {
       return { ok: false, kind: "user", message: error.message };
@@ -88,6 +92,4 @@ export const saveOrderAction = async (
     console.error("Error inesperado al guardar la orden:", error);
     return { ok: false, kind: "system" };
   }
-
-  redirect(`/orders/${orderId}`);
 };

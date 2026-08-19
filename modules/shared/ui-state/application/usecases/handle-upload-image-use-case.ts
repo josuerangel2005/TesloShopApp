@@ -11,4 +11,8 @@ export class HandleUploadImageUseCase {
   public upload(image: ImageUpload): Promise<string> {
     return this.forImageUpload.upload(image);
   }
+
+  public removeImageByUrl(secureUrl: string): Promise<void> {
+    return this.forImageUpload.removeImageByUrl(secureUrl);
+  }
 }
