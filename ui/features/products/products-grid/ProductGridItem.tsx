@@ -13,9 +13,9 @@ export const ProductGridItem = ({ product }: Props) => {
       className="group block rounded-lg border border-gray-200 bg-white p-3 transition-all duration-300 hover:-translate-y-1 hover:border-gray-300 hover:shadow-md"
     >
       <ProductGridImage
-        src={`/products/${product.images[0].url}`}
+        src={product.images[0].url}
         alt={product.title}
-        hoverSrc={`/products/${product.images[1].url}`}
+        hoverSrc={product.images[1].url}
         hoverAlt={`${product.title} - vista alternativa`}
       />
 

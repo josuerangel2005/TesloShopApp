@@ -89,7 +89,7 @@ export const CartItems = () => {
               className="flex gap-4 rounded-xl border border-slate-200 bg-white p-3 transition-shadow hover:shadow-md"
             >
               <Image
-                src={`/products/${product.getImage()}`}
+                src={product.getImage()}
                 alt={product.getTitle()}
                 width={100}
                 height={100}

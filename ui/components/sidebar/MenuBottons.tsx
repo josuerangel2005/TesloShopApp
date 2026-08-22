@@ -68,13 +68,13 @@ export const MenuButtons = ({ isAuthenticated, rol }: Props) => {
         <>
           <div className="w-full h-px bg-gray-200 my-10" />
           <Link
-            href={"/"}
+            href={"/admin/products"}
             className="flex items-center mt-10 p-2 hover:bg-gray-100 rounded transition-all"
 
             onClick={() => handleOnClick()}
           >
             <IoShareOutline size={30} />
-            <span className="ml-5 text-xl">Products</span>
+            <span className="ml-5 text-xl">Productos</span>
           </Link>
           <Link
             href={"/orders"}
@@ -86,7 +86,7 @@ export const MenuButtons = ({ isAuthenticated, rol }: Props) => {
             <span className="ml-5 text-xl">Todas las Órdenes</span>
           </Link>
           <Link
-            href={"/"}
+            href={"/admin/users"}
             className="flex items-center mt-10 p-2 hover:bg-gray-100 rounded transition-all"
 
             onClick={() => handleOnClick()}

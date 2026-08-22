@@ -103,7 +103,7 @@ export const OrdersItems = async ({ id }: Props) => {
                   className="flex gap-4 rounded-xl border border-slate-200 bg-white p-4 transition-shadow hover:shadow-md"
                 >
                   <Image
-                    src={`/products/${product.images[0]}`}
+                    src={product.images[0]}
                     alt={product.title}
                     width={100}
                     height={100}

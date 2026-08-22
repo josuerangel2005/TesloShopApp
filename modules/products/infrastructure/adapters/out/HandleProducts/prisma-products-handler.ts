@@ -14,6 +14,9 @@ import { Product } from "../../../../domain/model/product";
 import { Gender as GenderModel } from "../../../../domain/model/gender";
 import { categoryRowToDomain } from "./utils/category.mapper";
 import { productRowToDomain } from "./utils/product.mapper";
+import { ImageUpload } from "../../../../../shared/ui-state/domain/model/image-upload";
+import { getHandleUploadImageUseCase } from "../../../../../shared/ui-state/infrastructure/config/factory/handle-upload-image-use-case-factory";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 
 export class PrismaProductsHandler implements ForHandleProducts {
   private readonly prismaClient: typeof prisma;
@@ -280,6 +283,177 @@ export class PrismaProductsHandler implements ForHandleProducts {
       )
         throw new ProductNotExistsException(slug);
       throw error;
+    }
+  }
+
+  async getAllCategories(): Promise<Category[]> {
+    try {
+      return (await this.prismaClient.category.findMany()).map(
+        (row) => new Category(row.id, row.name),
+      );
+    } catch (error) {
+      throw new ProductsPersistenceException(
+        `Failed to get all categories: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  async saveProduct(
+    productSave: ProductSaveCommand,
+    imagesUpload: ImageUpload[],
+  ): Promise<void> {
+    const handleUploadImage = getHandleUploadImageUseCase();
+    try {
+      const urls = await Promise.all(
+        imagesUpload.map(
+          async (imageUpload) => await handleUploadImage.upload(imageUpload),
+        ),
+      );
+
+      await this.prismaClient.$transaction(async (tx) => {
+        const product = await tx.product.create({
+          data: {
+            title: productSave.getTitle(),
+            description: productSave.getDescription(),
+            inStock: productSave.getInStock(),
+            price: productSave.getPrice(),
+            slug: productSave.getSlug(),
+            gender: this.toPrismaGender(productSave.getGender()),
+            sizes: productSave.getSizes(),
+            tags: productSave.getTags(),
+            categoryId: productSave.getCategoryId(),
+          },
+        });
+
+        await tx.productImage.createMany({
+          data: urls.map((url) => ({
+            url,
+            productId: product.id,
+          })),
+        });
+      });
+    } catch (error) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      )
+        throw new ProductAlreadyExistsException(productSave.getSlug());
+      throw new ProductsPersistenceException(
+        `Failed to save product: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  async updateProduct(
+    productSave: ProductSaveCommand,
+    imagesUpload: ImageUpload[],
+    productId: string,
+    initialImages: string[],
+  ): Promise<void> {
+    try {
+      const handleUploadImage = getHandleUploadImageUseCase();
+
+      const urls = await Promise.all(
+        imagesUpload.map(
+          async (imageUpload) => await handleUploadImage.upload(imageUpload),
+        ),
+      );
+
+      const currentUrls = (
+        await this.prismaClient.productImage.findMany({
+          where: { productId },
+        })
+      ).map((image) => image.url);
+
+      const cloudinaryImagesToRemove = currentUrls.filter(
+        (url) => !initialImages.includes(url),
+      );
+
+      const cloudinaryImagesToPersist = currentUrls.filter(
+        (url) => !cloudinaryImagesToRemove.includes(url),
+      );
+
+      await Promise.all(
+        cloudinaryImagesToRemove.map(
+          async (url) => await handleUploadImage.removeImageByUrl(url),
+        ),
+      );
+
+      await this.prismaClient.$transaction(async (tx) => {
+        await tx.productImage.deleteMany({
+          where: { productId },
+        });
+
+        const product = await tx.product.update({
+          where: { id: productId },
+          data: {
+            title: productSave.getTitle(),
+            description: productSave.getDescription(),
+            inStock: productSave.getInStock(),
+            price: productSave.getPrice(),
+            slug: productSave.getSlug(),
+            gender: this.toPrismaGender(productSave.getGender()),
+            sizes: productSave.getSizes(),
+            tags: productSave.getTags(),
+            categoryId: productSave.getCategoryId(),
+          },
+        });
+
+        await tx.productImage.createMany({
+          data: [...urls, ...cloudinaryImagesToPersist].map((url) => ({
+            url,
+            productId: product.id,
+          })),
+        });
+      });
+    } catch (error) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      )
+        throw new ProductNotExistsException(productId);
+
+      throw new ProductsPersistenceException(
+        `Failed to update product: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  async deleteProductById(productId: string): Promise<void> {
+    const handleUploadImage = getHandleUploadImageUseCase();
+    try {
+      await this.prismaClient.$transaction(async (tx) => {
+        const imagesUrl = (
+          await tx.productImage.findMany({
+            where: { productId },
+          })
+        ).map((image) => image.url);
+
+        await Promise.all(
+          imagesUrl.map(
+            async (url) => await handleUploadImage.removeImageByUrl(url),
+          ),
+        );
+
+        await prisma.productImage.deleteMany({
+          where: {
+            productId,
+          },
+        });
+        await prisma.product.delete({
+          where: { id: productId },
+        });
+      });
+    } catch (error) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      )
+        throw new ProductNotExistsException(productId);
+
+      throw new ProductsPersistenceException(
+        `Failed to delete product: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 }

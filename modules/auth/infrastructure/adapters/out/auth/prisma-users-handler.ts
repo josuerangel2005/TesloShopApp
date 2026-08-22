@@ -12,6 +12,8 @@ import { toUserDomainMapper } from "./mappers/toUserDomainMapper";
 import { UserAlreadyExistsException } from "../../../../domain/error/user-already-exists-exception";
 import { VerificationTokenInvalidException } from "../../../../domain/error/verification-token-invalid-exception";
 import { UserSeedSaveCommand } from "../../../../domain/model/commands/user-seed-save-command";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
+import { UserWithIdNotExistsException } from "../../../../domain/error/user-with-id-not-exists-exception";
 
 export class PrismaUserHandler implements ForAuth {
   private readonly prismaClient: typeof prisma;
@@ -221,6 +223,51 @@ export class PrismaUserHandler implements ForAuth {
     } catch (error) {
       throw new UserPersistenceException(
         `Failed to delete user addresses: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  async getAllUsers(page: number, take: number): Promise<User[]> {
+    try {
+      return (
+        await this.prismaClient.user.findMany({
+          take,
+          skip: (page - 1) * take,
+        })
+      ).map(toUserDomainMapper);
+    } catch (error) {
+      throw new UserPersistenceException(`
+Failed to get all users: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  async getNumberOfAllUsers(): Promise<number> {
+    try {
+      return await this.prismaClient.user.count();
+    } catch (error) {
+      throw new UserPersistenceException(
+        `Failed to count users: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  async updateRolByUserId(userId: string, newRol: string): Promise<void> {
+    try {
+      await this.prismaClient.user.update({
+        where: { id: userId },
+        data: {
+          role: newRol as Role,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === "2025"
+      )
+        throw new UserWithIdNotExistsException(userId);
+
+      throw new UserPersistenceException(
+        `Failed to update user role: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }

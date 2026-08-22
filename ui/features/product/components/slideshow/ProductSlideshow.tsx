@@ -55,7 +55,7 @@ export const ProductSlideshow = ({ images, title, className }: Props) => {
             <Image
               width={1024}
               height={800}
-              src={`/products/${image}`}
+              src={image}
               alt={`${title} — imagen ${index + 1}`}
               className="h-full w-full rounded-lg bg-white object-cover"
             />
@@ -77,7 +77,7 @@ export const ProductSlideshow = ({ images, title, className }: Props) => {
             <Image
               width={300}
               height={300}
-              src={`/products/${image}`}
+              src={image}
               alt={`${title} — imagen ${index + 1}`}
               className="h-full w-full cursor-pointer rounded-xl bg-white object-cover"
             />

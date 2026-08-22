@@ -5,6 +5,7 @@ import { Category } from "../../domain/model/category";
 import { ProductSaveCommand } from "../../domain/model/commands/product-save-command";
 import { ProductImageSaveCommand } from "../../domain/model/commands/product-image-save-command";
 import { Gender } from "../../domain/model/gender";
+import { ImageUpload } from "../../../shared/ui-state/domain/model/image-upload";
 
 export class HandleProductsUseCase {
   private readonly forHandleProducts: ForHandleProducts;
@@ -72,5 +73,34 @@ export class HandleProductsUseCase {
 
   public getStockByProductSlug(slug: string): Promise<number> {
     return this.forHandleProducts.getStockByProductSlug(slug);
+  }
+
+  public getAllCategories(): Promise<Category[]> {
+    return this.forHandleProducts.getAllCategories();
+  }
+
+  public saveProduct(
+    productSave: ProductSaveCommand,
+    imagesUpload: ImageUpload[],
+  ): Promise<void> {
+    return this.forHandleProducts.saveProduct(productSave, imagesUpload);
+  }
+
+  public deleteProduct(productId: string): Promise<void> {
+    return this.forHandleProducts.deleteProductById(productId);
+  }
+
+  public updateProduct(
+    productSave: ProductSaveCommand,
+    imagesUpload: ImageUpload[],
+    productId: string,
+    initialImages: string[],
+  ): Promise<void> {
+    return this.forHandleProducts.updateProduct(
+      productSave,
+      imagesUpload,
+      productId,
+      initialImages,
+    );
   }
 }

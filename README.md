@@ -16,9 +16,10 @@ TypeScript estricto, Tailwind CSS v4, Prisma ORM y una arquitectura hexagonal
 | Datos       | Prisma ORM 7 (`@prisma/adapter-pg` + `pg`), PostgreSQL      |
 | Autenticación | NextAuth v5 (beta) + bcryptjs                             |
 | Email       | Nodemailer (Gmail SMTP)                                     |
-| Archivos    | Cloudinary SDK v2 (imágenes de perfil + documentos PDF)     |
-| PDF         | PDFShift API v3 (HTML → PDF, sandbox en desarrollo)         |
-| Validación  | Zod 4                                                       |
+| Archivos    | Cloudinary SDK v2 (avatares, imágenes de producto, PDFs)    |
+| Facturación | Spring Boot en Render (`BILLING_API_URL`) + PDFShift API v3 |
+| Formularios | React Hook Form 7                                           |
+| Validación  | Zod 4 (esquemas compartidos cliente + servidor)             |
 | Carrusel    | Swiper 14                                                   |
 | Iconos      | react-icons (`io5`)                                         |
 | Lenguaje    | TypeScript estricto                                         |
@@ -44,7 +45,7 @@ src/        Aplicación Next.js — rutas (App Router)
 | `modules/email`           | Envío de correos: puerto `ForEmailSender`, adaptador Gmail       |
 | `modules/shared/ui-state` | Estado de UI compartido (sidebar + carrito + dirección + uploads)|
 | `modules/shared/validation` | Esquemas Zod reutilizables (p. ej. `userAddressSchema`)        |
-| `modules/orders`          | (en preparación)                                                 |
+| `modules/orders`          | Órdenes: `Order`, `OrderItem`, `OrderAddress`, caso de uso y adaptador Prisma |
 
 **`modules/products`** sigue el esquema hexagonal:
 
@@ -56,7 +57,9 @@ domain/
 application/
   usecases/     Orquestación (HandleProductsUseCase)
 infrastructure/
-  adapters/out/ Adaptador Prisma (PrismaProductsHandler → implementa el puerto)
+  adapters/out/
+    HandleProducts/   PrismaProductsHandler — CRUD completo + consultas
+    Validate/         ZodValidateAdapter + ProductSchema (validación server-side)
   config/       Fábricas y cableado
 ```
 
@@ -70,6 +73,16 @@ Solo la **infraestructura** toca Prisma. El **dominio** declara el contrato
 - Los mappers de UI convierten **dominio → contratos de respuesta**
   (`productToResponse`).
 - Los mappers de `src/seed/` convierten **datos de seed → comandos de guardado**.
+
+El módulo incluye además el hexágono de **validación de productos**: el puerto
+`ForValidateProduct` declara `validateAll(...)`, el caso de uso
+`ValidateProductUseCase` lo orquesta y `ZodValidateAdapter` implementa la
+validación campo por campo contra `ProductSchema` (Zod), devolviendo un
+`ValidationResult` con `fieldErrors` tipados. La server action de
+guardado/actualización traduce esas claves a las rutas reales del formulario
+(p. ej. `imagesQuantity → images`, `category → category.name`) y las pinta con
+`setError`. El formulario complementa con validación React Hook Form en el
+cliente (UX) — el servidor siempre revalida (autoridad).
 
 **`modules/auth`** cubre el flujo completo de autenticación:
 
@@ -257,7 +270,11 @@ datos vía `ForAuth.verifyCredentials` (`auth.ts` → `NextAuthAuthorize` →
 | `/auth/verify-email`         | Verificación de correo por token             |
 | `/terminos` + `/politicas`   | Páginas legales (contexto colombiano)        |
 | `/empty`                     | Demo de estado vacío                         |
-| `/admin`                     | Placeholder de administración                |
+| `/admin`                     | Dashboard de administración                  |
+| `/admin/users`               | Gestión de usuarios (cambio de rol USER/ADMIN) |
+| `/admin/products`            | Tabla de productos (stock, precio, acciones) |
+| `/admin/product/new`         | Crear producto                               |
+| `/admin/product/[slug]`      | Editar producto                              |
 
 > Las páginas de la tienda están conectadas a la base de datos mediante
 > **server actions** (`ui/features/product/actions`) que llaman al caso de
@@ -307,6 +324,9 @@ CLOUDINARY_URL=cloudinary://api_key:api_secret@cloud_name
 # PDFShift (HTML → PDF; crea la key en https://app.pdfshift.io → API Keys)
 PDFSHIFT_API_KEY=sk_xxxxxxxxx
 
+# Servicio de facturación (Spring Boot en Render — genera el PDF de factura)
+BILLING_API_URL=https://spring-generate-bill.onrender.com
+
 # Gmail (App Password con 2FA habilitada)
 GMAIL_USER=tu-correo@gmail.com
 GMAIL_APP_PASSWORD=tu-app-password
@@ -339,6 +359,11 @@ npm run seed
 > ⚠️ `npm run seed` **resetea** la base primero (`deleteAll`) y luego inserta
 > el catálogo. Está pensado para ejecutarse cada vez que quieras datos demo
 > frescos.
+>
+> Las imágenes del catálogo se persisten con **ruta completa**
+> (`/products/<archivo>`); los productos creados desde el panel admin guardan
+> la URL completa de Cloudinary. Así la UI consume `url` plano, sin
+> transformaciones en los componentes.
 
 ### 7. Iniciar el servidor de desarrollo
 
@@ -400,6 +425,12 @@ npx prisma migrate reset
 - Clases globales de botones `.btn-primary` / `.btn-secondary`.
 - Listas/estados usan badges tipo pill con la paleta primaria; los inputs
   comparten un anillo de foco.
+- Los errores de formulario se muestran con ícono de alerta y el campo con
+  borde/estado rojo; las secciones sin input (tallas, imágenes) usan banners
+  destacados que se limpian al corregir.
+- `next/image` consume rutas locales (`/products/...`) y remotas de Cloudinary
+  (`res.cloudinary.com`, declarado en `images.remotePatterns`). Las imágenes
+  nuevas en previews usan `blob:` con `unoptimized`.
 - Las animaciones son solo CSS y respetan `prefers-reduced-motion`.
 - El copy de UI está en español; el código y los identificadores en inglés.
 - Los correos transaccionales usan CSS inline (los clientes de correo ignoran
@@ -416,7 +447,10 @@ teslo-shop/
 ├── next.config.ts
 ├── auth.ts                          # Configuración de NextAuth (sesión)
 ├── auth.config.ts                   # Configuración de NextAuth (pages + providers)
-├── src/proxy.ts                     # Middleware/proxy de NextAuth (matcher: /auth, /profile, /checkout)
+├── src/proxy.ts                     # Middleware de NextAuth (matcher: /auth, /profile,
+│                                    #   /checkout, /admin) — /admin exige rol ADMIN
+│                                    #   vía el callback `authorized` de auth.config.ts;
+│                                    #   /auth/verify-email se permite con sesión activa
 ├── .env / .env-template
 ├── .gitignore
 ├── modules/
@@ -454,11 +488,11 @@ teslo-shop/
 │   │   │   ├── error/               # Excepciones de dominio
 │   │   │   └── ports/driven/for-handle-products.ts
 │   │   ├── application/usecases/handle-products-use-case.ts
+│   │   │                          # + validate-product-use-case.ts
 │   │   └── infrastructure/
-│   │       ├── adapters/out/HandleProducts/
-│   │       │   ├── prisma-products-handler.ts
-│   │       │   ├── utils/           # Mappers del adaptador (fila → dominio)
-│   │       │   └── persistence/prisma/schema.prisma (mover a shared)
+│   │       ├── adapters/out/
+│   │       │   ├── HandleProducts/   # prisma-products-handler + utils (mappers)
+│   │       │   └── Validate/         # zod-validate-adapter + product-schema
 │   │       └── config/factory/
 │   ├── shared/
 │   │   ├── ui-state/
@@ -478,11 +512,16 @@ teslo-shop/
 │   │   │   │   └── persistence/prisma/   # schema + migraciones
 │   │   │   └── config/factory/
 │   │   └── validation/              # esquemas Zod compartidos (registro, dirección)
-│   └── orders/                      # (en preparación)
+│   └── orders/                      # Order/OrderItem/OrderAddress + caso de uso
+│                                    #   + adaptador Prisma + factura por email
 ├── ui/
 │   ├── index.ts
 │   ├── components/                  # sidebar, top-menu, title, footer...
 │   └── features/
+│       ├── admin/                   # Panel de administración
+│       │   ├── users/               # UsersTable + RoleSelector + actions
+│       │   ├── products/            # ProductsTable + AddProductButton
+│       │   └── product/             # ProductForm (RHF) + actions + interfaces
 │       ├── address/                 # AddressForm + actions (save/get/delete/countries)
 │       ├── cart/                    # CartItems + currency-format
 │       ├── checkout/                # CheckoutItems (carrito + dirección reales)
@@ -511,6 +550,14 @@ teslo-shop/
 - **Catálogo desde Postgres**: home, categoría (por género) y detalle de
   producto consultan a través del caso de uso; `PrismaProductsHandler` cubre
   paginación, conteos, búsquedas por slug y stock. El seed puebla el catálogo.
+- **Panel de administración**: dashboard, gestión de usuarios (cambio de rol
+  USER/ADMIN con `RoleSelector`) y CRUD completo de productos — crear, editar
+  y eliminar con subida de imágenes a Cloudinary. Formulario con validación
+  dual: React Hook Form en cliente + hexágono Zod (`ZodValidateAdapter`) en
+  servidor, con mapeo de `fieldErrors` a los campos del form.
+- **Imágenes consistentes**: la BD guarda siempre rutas completas (seed
+  persiste `/products/<archivo>`; uploads guardan la URL de Cloudinary). La
+  UI consume `url` plano vía `next/image`.
 - **Carrito persistido en el cliente**: Zustand `persist` bajo
   `shopping-cart`, leído por `CartItems`/`TopMenuCartCount`/`CheckoutItems`
   como única fuente de verdad vía `useSyncExternalStore`.
@@ -519,15 +566,12 @@ teslo-shop/
   (`UserAddress`). El checkout muestrea la dirección desde el store.
 - **Registro y verificación de email**: flujo completo implementado
   (registro → token → correo → verificación). `authorize()` de NextAuth
-  valida credenciales contra la BD (`NextAuthAuthorize`). Pendiente: página
-  `/auth/check-email` (hoy el registro redirige a `/auth/login?registered=1`).
-- **Documentos / facturas (en curso)**: conversión HTML → PDF vía PDFShift
-  (sandbox en dev) y subida de PDFs a Cloudinary
-  (`CloudinaryDocumentUploadAdapter`, `resource_type: "raw"`). Pendiente:
-  template `invoice-email`, server action que orqueste factura → PDF →
-  Cloudinary → email, y la persistencia de la orden (modelos `Order`,
-  `OrderItem`, `OrderAddress` ya migrados).
-- Las rutas de órdenes/admin todavía muestran demo o placeholders.
+  valida credenciales contra la BD (`NextAuthAuthorize`). El proxy protege
+  `/admin` por rol y permite `/auth/verify-email` con sesión activa.
+- **Facturas por email**: `send-invoice-email-action` orquesta orden →
+  servicio Spring (`BILLING_API_URL`) genera el PDF → URL del documento →
+  correo con el enlace (`invoice-email`). PDFShift queda como alternativa
+  de conversión HTML → PDF.
 - Sin tests automatizados todavía (sin runner ni suite configurada).
 
 ---

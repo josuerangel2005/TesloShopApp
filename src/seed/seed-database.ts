@@ -52,7 +52,8 @@ async function main() {
       products.flatMap((product) =>
         product.images.map(async (img) =>
           toProductImageSaveCommand(
-            img,
+            // Guardar ruta completa: los filenames del seed viven en /public/products
+            img.includes("http") ? img : `/products/${img}`,
             await handleProductsUseCase.getProductIdBySlug(product.slug),
           ),
         ),

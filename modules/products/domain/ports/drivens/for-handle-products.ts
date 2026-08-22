@@ -1,3 +1,4 @@
+import { ImageUpload } from "../../../../shared/ui-state/domain/model/image-upload";
 import { Category } from "../../model/category";
 import { CategorySaveCommand } from "../../model/commands/category-save-command";
 import { ProductImageSaveCommand } from "../../model/commands/product-image-save-command";
@@ -23,4 +24,16 @@ export interface ForHandleProducts {
   getProductBySlug: (slug: string) => Promise<Product>;
   getProductsByIds: (ids: string[]) => Promise<Product[]>;
   getStockByProductSlug: (slug: string) => Promise<number>;
+  getAllCategories: () => Promise<Category[]>;
+  saveProduct: (
+    productSave: ProductSaveCommand,
+    imagesUpload: ImageUpload[],
+  ) => Promise<void>;
+  deleteProductById: (productId: string) => Promise<void>;
+  updateProduct: (
+    productSave: ProductSaveCommand,
+    imagesUpload: ImageUpload[],
+    productId: string,
+    initialImages: string[],
+  ) => Promise<void>;
 }

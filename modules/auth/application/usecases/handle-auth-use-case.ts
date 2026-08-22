@@ -90,4 +90,16 @@ export class HandleAuthUseCase {
   public deleteAllUserAddresses(): Promise<void> {
     return this.forAuth.deleteAllUserAddresses();
   }
+
+  public getAllUsers(page: number, take: number): Promise<User[]> {
+    return this.forAuth.getAllUsers(page, take);
+  }
+
+  public getNumberOfAllUsers(): Promise<number> {
+    return this.forAuth.getNumberOfAllUsers();
+  }
+
+  public updateRolByUserId(userId: string, newRol: string): Promise<void> {
+    return this.forAuth.updateRolByUserId(userId, newRol);
+  }
 }
