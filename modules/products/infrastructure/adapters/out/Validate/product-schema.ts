@@ -2,25 +2,17 @@ import { z } from "zod";
 
 export const sizesScheme = z.enum(["XS", "S", "M", "L", "XL", "XXL"]);
 
-export const genderSchema = z.enum([
-  "hombre",
-  "mujer",
-  "niño",
-  "niña",
-  "unisex",
-]);
+export const genderSchema = z.enum(["men", "women", "kid", "unisex"]);
 
-export const categorySchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(3, "El nombre de la categoría debe tener al menos 3 caracteres.")
-    .max(80, "El nombre de la categoría no puede superar los 80 caracteres.")
-    .regex(
-      /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü .-]+$/u,
-      "El nombre de la categoría solo puede contener letras, espacios, puntos y guiones.",
-    ),
-});
+export const categorySchema = z
+  .string()
+  .trim()
+  .min(3, "El nombre de la categoría debe tener al menos 3 caracteres.")
+  .max(80, "El nombre de la categoría no puede superar los 80 caracteres.")
+  .regex(
+    /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü .-]+$/u,
+    "El nombre de la categoría solo puede contener letras, espacios, puntos y guiones.",
+  );
 
 export const idScheme = z
   .string()
@@ -32,8 +24,8 @@ export const titleScheme = z
   .min(3, "El título del producto debe tener al menos 3 caracteres.")
   .max(80, "El título del producto no puede superar los 80 caracteres.")
   .regex(
-    /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü .-]+$/u,
-    "El título del producto solo puede contener letras, espacios, puntos y guiones.",
+    /^[A-Za-z0-9ÁÉÍÓÚáéíóúÑñÜü .,-]+$/u,
+    "El título del producto solo puede contener letras, números, espacios, puntos y guiones.",
   );
 
 export const descriptionScheme = z
@@ -42,8 +34,8 @@ export const descriptionScheme = z
   .min(10, "La descripción del producto debe tener al menos 10 caracteres.")
   .max(500, "La descripción del producto no puede superar los 500 caracteres.")
   .regex(
-    /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9\s.,#-]+$/u,
-    "La descripción del producto solo puede contener letras, números, espacios y los caracteres . , # -",
+    /^[A-Za-z0-9ÁÉÍÓÚáéíóúÑñÜü\s.,;:¡!¿?'"()%&#@/-]+$/u,
+    "La descripción del producto contiene caracteres no permitidos.",
   );
 
 export const inStockScheme = z
@@ -65,8 +57,8 @@ export const slugScheme = z
   .min(1, "El slug del producto no puede estar vacío.")
   .max(100, "El slug del producto no puede superar los 100 caracteres.")
   .regex(
-    /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
-    "El slug del producto solo puede contener letras minúsculas, números y guiones.",
+    /^[a-z0-9]+(?:_[a-z0-9]+)*$/,
+    "El slug del producto solo puede contener letras minúsculas, números y guiones bajos.",
   );
 
 export const tagsScheme = z
@@ -79,7 +71,7 @@ export const imagesQuantityScheme = z
   .number()
   .int()
   .nonnegative("La cantidad de imágenes debe ser un número entero no negativo.")
-  .min(2, "El producto debe tener al menos una imagen.")
+  .min(1, "El producto debe tener al menos una imagen.")
   .max(5, "El producto no puede tener más de 5 imágenes.");
 
 export const ProductSchema = z.object({

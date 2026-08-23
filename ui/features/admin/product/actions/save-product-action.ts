@@ -1,6 +1,7 @@
 "use server";
 
 import { getHandleProductsUseCase } from "../../../../../modules/products";
+import { ProductAlreadyExistsException } from "../../../../../modules/products/domain/error/product-already-exists-exception";
 import { ProductSaveCommand } from "../../../../../modules/products/domain/model/commands/product-save-command";
 import { Gender } from "../../../../../modules/products/domain/model/gender";
 import { ValidationResult } from "../../../../../modules/products/domain/model/validation-result";
@@ -9,11 +10,10 @@ import { ImageUpload } from "../../../../../modules/shared/ui-state/domain/model
 import { Size } from "../../../../../modules/shared/ui-state/domain/model/size";
 import { ProductFormResponse } from "../interfaces/product-form-response";
 
-export const updateProductAction = async (
+export const saveProductAction = async (
   data: ProductFormResponse,
   imagesUpload: File[],
-  initialImages: string[],
-): Promise<ValidationResult> => {
+): Promise<ValidationResult | { success: false; message: string }> => {
   const validateProductUseCase = getValidateProductUseCase();
   const handleProductsUseCase = getHandleProductsUseCase();
 
@@ -36,14 +36,14 @@ export const updateProductAction = async (
       data.gender,
       data.category.name,
       data.sizes,
-      initialImages.length + imagesUpload.length,
+      imagesUpload.length,
       +data.inStock,
     );
 
     if (!result.success) return result;
 
     //Persistir cambios del producto
-    await handleProductsUseCase.updateProduct(
+    await handleProductsUseCase.saveProduct(
       new ProductSaveCommand(
         data.description,
         data.title,
@@ -67,12 +67,15 @@ export const updateProductAction = async (
             ),
         ),
       ),
-      data.id,
-      initialImages,
     );
 
     return { success: true };
   } catch (error) {
+    if (error instanceof ProductAlreadyExistsException)
+      return {
+        success: false,
+        message: "Slug ya existente",
+      };
     console.log(error);
     throw error;
   }

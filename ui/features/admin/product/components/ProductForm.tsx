@@ -7,6 +7,7 @@ import {
   IoCloudUploadOutline,
   IoCloseOutline,
   IoShirtOutline,
+  IoArrowBackOutline,
 } from "react-icons/io5";
 
 import { useForm, type FieldPath } from "react-hook-form";
@@ -18,6 +19,8 @@ import { ProductFormResponse } from "../interfaces/product-form-response";
 import Image from "next/image";
 import { updateProductAction } from "../actions/update-product-action";
 import { useRouter } from "next/navigation";
+import { saveProductAction } from "../actions/save-product-action";
+import Link from "next/link";
 
 interface Props {
   product?: ProductResponse;
@@ -195,26 +198,32 @@ export const ProductForm = ({ product, categories }: Props) => {
       return;
     }
 
-    // const result = product ? await updateProductAction(): await updateProductAction();
+    const result = product
+      ? await updateProductAction(
+          data,
+          [...filesRef.current.values()],
+          currentFiles.filter((urlImg) => !filesUrls.includes(urlImg)),
+        )
+      : await saveProductAction(data, [...filesRef.current.values()]);
 
-    const result = await updateProductAction(
-      data,
-      [...filesRef.current.values()],
-      currentFiles.filter((urlImg) => !filesUrls.includes(urlImg)),
-    );
+    if (result.success === false) {
+      if ("fieldErrors" in result && result.fieldErrors) {
+        const { fieldErrors } = result;
 
-    if (result.success === false && result.fieldErrors) {
-      const { fieldErrors } = result;
+        Object.entries(fieldErrors).forEach(([serverField, message]) => {
+          if (!message) return;
 
-      Object.entries(fieldErrors).forEach(([serverField, message]) => {
-        if (!message) return;
+          const formPath = serverFieldToFormPath[serverField];
+          if (!formPath) return;
 
-        const formPath = serverFieldToFormPath[serverField];
-        if (!formPath) return;
-
-        setError(formPath, { type: "manual", message });
-      });
-
+          setError(formPath, { type: "manual", message });
+        });
+      } else if ("message" in result) {
+        setError("slug", {
+          type: "manual",
+          message: result.message,
+        });
+      }
       return;
     }
 
@@ -222,313 +231,323 @@ export const ProductForm = ({ product, categories }: Props) => {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(handleOnSubmit)}
-      className="mb-16 grid w-full grid-cols-1 gap-6 px-5 sm:px-0 lg:grid-cols-2"
-      noValidate
-    >
-      {/* Columna izquierda */}
-      <div className="flex flex-col gap-6">
-        {/* Información general */}
-        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-5 flex items-center gap-2 border-b border-slate-100 pb-3 text-sm font-semibold uppercase tracking-wider text-slate-500">
-            <IoShirtOutline className="h-4 w-4 text-primary" />
-            Información general
-          </h2>
+    <>
+      <Link
+        href="/admin/products"
+        className="mb-5 mt-1 flex w-fit items-center gap-1 font-medium text-slate-600 underline-offset-4 hover:text-primary hover:underline"
+      >
+        <IoArrowBackOutline size={18} />
+        Atrás
+      </Link>
+      <form
+        onSubmit={handleSubmit(handleOnSubmit)}
+        className="mb-16 grid w-full grid-cols-1 gap-6 px-5 sm:px-0 lg:grid-cols-2"
+        noValidate
+      >
+        {/* Columna izquierda */}
+        <div className="flex flex-col gap-6">
+          {/* Información general */}
+          <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-5 flex items-center gap-2 border-b border-slate-100 pb-3 text-sm font-semibold uppercase tracking-wider text-slate-500">
+              <IoShirtOutline className="h-4 w-4 text-primary" />
+              Información general
+            </h2>
 
-          <div className="flex flex-col gap-4">
-            <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Título
-              </span>
-              <input
-                {...register("title", {
-                  required: "El título del producto es obligatorio",
-                  minLength: {
-                    value: 8,
-                    message: "Debe tener mínimo 8 caracteres",
-                  },
-                  maxLength: {
-                    value: 100,
-                    message: "Debe tener máximo 100 caracteres",
-                  },
-                  validate: (value) =>
-                    !/[@$!%*?&._-]/.test(value) ||
-                    "No debe tener caracteres especiales",
-                })}
-                type="text"
-                className={inputClassName(Boolean(errors.title))}
-              />
-              <FieldErrorMessage message={errors.title?.message} />
-            </label>
+            <div className="flex flex-col gap-4">
+              <label className="flex flex-col gap-1.5">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Título
+                </span>
+                <input
+                  {...register("title", {
+                    required: "El título del producto es obligatorio",
+                    minLength: {
+                      value: 8,
+                      message: "Debe tener mínimo 8 caracteres",
+                    },
+                    maxLength: {
+                      value: 100,
+                      message: "Debe tener máximo 100 caracteres",
+                    },
+                    validate: (value) =>
+                      !/[@$!%*?&._-]/.test(value) ||
+                      "No debe tener caracteres especiales",
+                  })}
+                  type="text"
+                  className={inputClassName(Boolean(errors.title))}
+                />
+                <FieldErrorMessage message={errors.title?.message} />
+              </label>
 
-            <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Slug
-              </span>
-              <input
-                type="text"
-                className={inputClassName(Boolean(errors.slug))}
-                {...register("slug", {
-                  required: "El slug es obligatorio",
-                  validate: (value) =>
-                    !/\s/.test(value) || "No debe contener espacios en blanco",
-                })}
-              />
-              <FieldErrorMessage message={errors.slug?.message} />
-            </label>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Slug
+                </span>
+                <input
+                  type="text"
+                  className={inputClassName(Boolean(errors.slug))}
+                  {...register("slug", {
+                    required: "El slug es obligatorio",
+                    validate: (value) =>
+                      !/\s/.test(value) ||
+                      "No debe contener espacios en blanco",
+                  })}
+                />
+                <FieldErrorMessage message={errors.slug?.message} />
+              </label>
 
-            <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Descripción
-              </span>
-              <textarea
-                {...register("description", {
-                  required: "La descripción es obligatoria",
-                  minLength: {
-                    value: 20,
-                    message: "Debe tener como mínimo 20 caracteres",
-                  },
-                  maxLength: {
-                    value: 600,
-                    message: "Debe tener como máximo 600 caracteres",
-                  },
-                })}
-                rows={5}
+              <label className="flex flex-col gap-1.5">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Descripción
+                </span>
+                <textarea
+                  {...register("description", {
+                    required: "La descripción es obligatoria",
+                    minLength: {
+                      value: 20,
+                      message: "Debe tener como mínimo 20 caracteres",
+                    },
+                    maxLength: {
+                      value: 600,
+                      message: "Debe tener como máximo 600 caracteres",
+                    },
+                  })}
+                  rows={5}
+                  className={clsx(
+                    inputClassName(Boolean(errors.description)),
+                    "resize-none",
+                  )}
+                />
+                <FieldErrorMessage message={errors.description?.message} />
+              </label>
+            </div>
+          </section>
+
+          {/* Precio y clasificación */}
+          <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-5 border-b border-slate-100 pb-3 text-sm font-semibold uppercase tracking-wider text-slate-500">
+              Precio y clasificación
+            </h2>
+
+            <div className="flex flex-col gap-4">
+              <label className="flex flex-col gap-1.5">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Precio (USD)
+                </span>
+                <input
+                  {...register("price", {
+                    required: "Precio obligatorio",
+                    min: {
+                      value: 25,
+                      message: "El precio mínimo son  25 dólares",
+                    },
+                  })}
+                  type="number"
+                  className={inputClassName(Boolean(errors.price))}
+                />
+                <FieldErrorMessage message={errors.price?.message} />
+              </label>
+
+              <label className="flex flex-col gap-1.5">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Stock
+                </span>
+                <input
+                  {...register("inStock", {
+                    required: "Stock obligatorio",
+                    min: {
+                      value: 0,
+                      message: "El stock no puede ser menor a cero",
+                    },
+                  })}
+                  type="number"
+                  className={inputClassName(Boolean(errors.inStock))}
+                />
+                <FieldErrorMessage message={errors.inStock?.message} />
+              </label>
+
+              <label className="flex flex-col gap-1.5">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Etiquetas
+                </span>
+                <input
+                  type="text"
+                  placeholder="shirt, t-shirt, ..."
+                  className={inputClassName(Boolean(errors.tags))}
+                  {...register("tags", {
+                    required: "Debe tener al menos un tag",
+                  })}
+                />
+                <FieldErrorMessage message={errors.tags?.message} />
+              </label>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <label className="flex flex-col gap-1.5">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    Género
+                  </span>
+                  <select
+                    {...register("gender", {
+                      required: "Género obligatorio",
+                    })}
+                    className={selectClassName(Boolean(errors.gender))}
+                  >
+                    <option value="">[Seleccione]</option>
+                    <option value="men">Hombre</option>
+                    <option value="women">Mujer</option>
+                    <option value="kid">Niño</option>
+                    <option value="unisex">Unisex</option>
+                  </select>
+                  <FieldErrorMessage message={errors.gender?.message} />
+                </label>
+
+                <label className="flex flex-col gap-1.5">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    Categoría
+                  </span>
+                  <select
+                    {...register("category.name", {
+                      required: "Categoria obligatoria",
+                    })}
+                    className={selectClassName(Boolean(errors.category?.name))}
+                  >
+                    <option value="">[Seleccione]</option>
+                    {categories.map((category) => (
+                      <option key={category.name} value={category.name}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                  <FieldErrorMessage message={errors.category?.name?.message} />
+                </label>
+              </div>
+            </div>
+          </section>
+
+          <button type="submit" className="btn-primary w-full py-2.5">
+            <IoAddOutline className="h-4 w-4" />
+            Guardar
+          </button>
+        </div>
+
+        {/* Columna derecha */}
+        <div className="flex flex-col gap-6">
+          {/* Tallas */}
+          <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-5 border-b border-slate-100 pb-3 text-sm font-semibold uppercase tracking-wider text-slate-500">
+              Tallas
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {sizes.map((size) => {
+                const isSelected = selectedSizes.includes(size as Size);
+                const hasSizeError = Boolean(errors.sizes);
+
+                return (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => handleOnToggleSize(size)}
+                    className={clsx(
+                      "flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border text-sm font-medium transition-colors",
+                      isSelected
+                        ? "border-blue-950 bg-blue-950 text-white"
+                        : hasSizeError
+                          ? "border-red-300 bg-red-50 text-red-400 hover:border-red-400 hover:text-red-500"
+                          : "border-slate-300 bg-slate-50 text-slate-600 hover:border-primary hover:bg-primary/5 hover:text-primary",
+                    )}
+                  >
+                    <span>{size}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <SectionErrorBanner message={errors.sizes?.message} />
+          </section>
+
+          {/* Fotos */}
+          <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-5 flex items-center justify-between border-b border-slate-100 pb-3 text-sm font-semibold uppercase tracking-wider text-slate-500">
+              <span>Fotos</span>
+              {selectedImages.length > 0 && (
+                <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-200">
+                  {selectedImages.length} seleccionada
+                  {selectedImages.length !== 1 ? "s" : ""}
+                </span>
+              )}
+            </h2>
+            {selectedImages.length > 0 && (
+              <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {selectedImages.map((preview, index) => (
+                  <div
+                    key={preview}
+                    className="group relative aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-100"
+                  >
+                    <Image
+                      src={preview}
+                      alt={`Vista previa ${index + 1}`}
+                      width={400}
+                      height={400}
+                      objectFit="cover"
+                      loading="lazy"
+                      unoptimized={preview.startsWith("blob:")}
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(index)}
+                      className="cursor-pointer absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-slate-900/60 text-white transition-colors hover:bg-red-600"
+                      aria-label={`Quitar imagen ${index + 1}`}
+                    >
+                      <IoCloseOutline className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <label
+              className={clsx(
+                "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-8 text-center transition-colors",
+                errors.images
+                  ? "border-red-300 bg-red-50 hover:border-red-400"
+                  : "border-slate-300 bg-slate-50 hover:border-primary hover:bg-primary/5",
+              )}
+            >
+              <IoCloudUploadOutline
                 className={clsx(
-                  inputClassName(Boolean(errors.description)),
-                  "resize-none",
+                  "h-8 w-8",
+                  errors.images ? "text-red-400" : "text-slate-400",
                 )}
               />
-              <FieldErrorMessage message={errors.description?.message} />
-            </label>
-          </div>
-        </section>
-
-        {/* Precio y clasificación */}
-        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-5 border-b border-slate-100 pb-3 text-sm font-semibold uppercase tracking-wider text-slate-500">
-            Precio y clasificación
-          </h2>
-
-          <div className="flex flex-col gap-4">
-            <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Precio (USD)
+              <span
+                className={clsx(
+                  "text-sm font-medium",
+                  errors.images ? "text-red-600" : "text-slate-600",
+                )}
+              >
+                Subir imágenes del producto
+              </span>
+              <span
+                className={
+                  errors.images
+                    ? "text-xs text-red-400"
+                    : "text-xs text-slate-400"
+                }
+              >
+                PNG o JPG — puede elegir varias
               </span>
               <input
-                {...register("price", {
-                  required: "Precio obligatorio",
-                  min: {
-                    value: 25,
-                    message: "El precio mínimo son  25 dólares",
-                  },
-                })}
-                type="number"
-                className={inputClassName(Boolean(errors.price))}
+                type="file"
+                multiple
+                accept="image/png, image/jpeg"
+                onChange={handleFileChange}
+                className="sr-only"
               />
-              <FieldErrorMessage message={errors.price?.message} />
             </label>
-
-            <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Stock
-              </span>
-              <input
-                {...register("inStock", {
-                  required: "Stock obligatorio",
-                  min: {
-                    value: 0,
-                    message: "El stock no puede ser menor a cero",
-                  },
-                })}
-                type="number"
-                className={inputClassName(Boolean(errors.inStock))}
-              />
-              <FieldErrorMessage message={errors.inStock?.message} />
-            </label>
-
-            <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Etiquetas
-              </span>
-              <input
-                type="text"
-                placeholder="shirt, t-shirt, ..."
-                className={inputClassName(Boolean(errors.tags))}
-                {...register("tags", {
-                  required: "Debe tener al menos un tag",
-                })}
-              />
-              <FieldErrorMessage message={errors.tags?.message} />
-            </label>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <label className="flex flex-col gap-1.5">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  Género
-                </span>
-                <select
-                  {...register("gender", {
-                    required: "Género obligatorio",
-                  })}
-                  className={selectClassName(Boolean(errors.gender))}
-                >
-                  <option value="">[Seleccione]</option>
-                  <option value="men">Hombre</option>
-                  <option value="women">Mujer</option>
-                  <option value="kid">Niño</option>
-                  <option value="unisex">Unisex</option>
-                </select>
-                <FieldErrorMessage message={errors.gender?.message} />
-              </label>
-
-              <label className="flex flex-col gap-1.5">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  Categoría
-                </span>
-                <select
-                  {...register("category.name", {
-                    required: "Categoria obligatoria",
-                  })}
-                  className={selectClassName(Boolean(errors.category?.name))}
-                >
-                  <option value="">[Seleccione]</option>
-                  {categories.map((category) => (
-                    <option key={category.name} value={category.name}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-                <FieldErrorMessage message={errors.category?.name?.message} />
-              </label>
-            </div>
-          </div>
-        </section>
-
-        <button type="submit" className="btn-primary w-full py-2.5">
-          <IoAddOutline className="h-4 w-4" />
-          Guardar
-        </button>
-      </div>
-
-      {/* Columna derecha */}
-      <div className="flex flex-col gap-6">
-        {/* Tallas */}
-        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-5 border-b border-slate-100 pb-3 text-sm font-semibold uppercase tracking-wider text-slate-500">
-            Tallas
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {sizes.map((size) => {
-              const isSelected = selectedSizes.includes(size as Size);
-              const hasSizeError = Boolean(errors.sizes);
-
-              return (
-                <button
-                  key={size}
-                  type="button"
-                  onClick={() => handleOnToggleSize(size)}
-                  className={clsx(
-                    "flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border text-sm font-medium transition-colors",
-                    isSelected
-                      ? "border-blue-950 bg-blue-950 text-white"
-                      : hasSizeError
-                        ? "border-red-300 bg-red-50 text-red-400 hover:border-red-400 hover:text-red-500"
-                        : "border-slate-300 bg-slate-50 text-slate-600 hover:border-primary hover:bg-primary/5 hover:text-primary",
-                  )}
-                >
-                  <span>{size}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <SectionErrorBanner message={errors.sizes?.message} />
-        </section>
-
-        {/* Fotos */}
-        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-5 flex items-center justify-between border-b border-slate-100 pb-3 text-sm font-semibold uppercase tracking-wider text-slate-500">
-            <span>Fotos</span>
-            {selectedImages.length > 0 && (
-              <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-200">
-                {selectedImages.length} seleccionada
-                {selectedImages.length !== 1 ? "s" : ""}
-              </span>
-            )}
-          </h2>
-          {selectedImages.length > 0 && (
-            <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {selectedImages.map((preview, index) => (
-                <div
-                  key={preview}
-                  className="group relative aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-100"
-                >
-                  <Image
-                    src={preview}
-                    alt={`Vista previa ${index + 1}`}
-                    width={400}
-                    height={400}
-                    objectFit="cover"
-                    loading="lazy"
-                    unoptimized={preview.startsWith("blob:")}
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveImage(index)}
-                    className="cursor-pointer absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-slate-900/60 text-white transition-colors hover:bg-red-600"
-                    aria-label={`Quitar imagen ${index + 1}`}
-                  >
-                    <IoCloseOutline className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          <label
-            className={clsx(
-              "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-8 text-center transition-colors",
-              errors.images
-                ? "border-red-300 bg-red-50 hover:border-red-400"
-                : "border-slate-300 bg-slate-50 hover:border-primary hover:bg-primary/5",
-            )}
-          >
-            <IoCloudUploadOutline
-              className={clsx(
-                "h-8 w-8",
-                errors.images ? "text-red-400" : "text-slate-400",
-              )}
-            />
-            <span
-              className={clsx(
-                "text-sm font-medium",
-                errors.images ? "text-red-600" : "text-slate-600",
-              )}
-            >
-              Subir imágenes del producto
-            </span>
-            <span
-              className={
-                errors.images
-                  ? "text-xs text-red-400"
-                  : "text-xs text-slate-400"
-              }
-            >
-              PNG o JPG — puede elegir varias
-            </span>
-            <input
-              type="file"
-              multiple
-              accept="image/png, image/jpeg"
-              onChange={handleFileChange}
-              className="sr-only"
-            />
-          </label>
-          <SectionErrorBanner message={errors.images?.message} />
-        </section>
-      </div>
-    </form>
+            <SectionErrorBanner message={errors.images?.message} />
+          </section>
+        </div>
+      </form>{" "}
+    </>
   );
 };

@@ -58,12 +58,6 @@ export const UsersTable = ({ users, totalUsers }: Props) => {
               >
                 Verificado
               </th>
-              <th
-                scope="col"
-                className="px-6 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-slate-500"
-              >
-                Acciones
-              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -106,15 +100,6 @@ export const UsersTable = ({ users, totalUsers }: Props) => {
                       Pendiente
                     </span>
                   )}
-                </td>
-                <td className="whitespace-nowrap px-6 py-4 text-right">
-                  <button
-                    type="button"
-                    disabled
-                    className="inline-flex cursor-not-allowed items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-400 opacity-60"
-                  >
-                    Editar
-                  </button>
                 </td>
               </tr>
             ))}

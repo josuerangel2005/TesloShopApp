@@ -151,11 +151,15 @@ export class PrismaProductsHandler implements ForHandleProducts {
   public async getAllProductsWithImages(
     page: number,
     take: number,
+    search: string,
   ): Promise<Product[]> {
     try {
       const rows = await this.prismaClient.product.findMany({
         take,
         skip: (page - 1) * take,
+        where: {
+          title: { contains: search },
+        },
         include: { category: true, productImages: true },
       });
       return rows.map((row) => productRowToDomain(row));
@@ -171,9 +175,11 @@ export class PrismaProductsHandler implements ForHandleProducts {
     }
   }
 
-  public async getQuantityProducts(): Promise<number> {
+  public async getQuantityProducts(search: string): Promise<number> {
     try {
-      return await this.prismaClient.product.count();
+      return await this.prismaClient.product.count({
+        where: { title: { contains: search } },
+      });
     } catch (error) {
       throw new ProductsPersistenceException(
         `Failed to count products: ${error instanceof Error ? error.message : String(error)}`,
@@ -185,11 +191,13 @@ export class PrismaProductsHandler implements ForHandleProducts {
     gender: GenderModel,
     page: number,
     take: number,
+    search: string,
   ): Promise<Product[]> {
     try {
       const rows = await this.prismaClient.product.findMany({
         where: {
           gender: this.toPrismaGender(gender),
+          title: { contains: search },
         },
         take,
         skip: (page - 1) * take,
@@ -210,11 +218,13 @@ export class PrismaProductsHandler implements ForHandleProducts {
 
   public async getQuantityProductsByGender(
     gender: GenderModel,
+    search: string,
   ): Promise<number> {
     try {
       return await this.prismaClient.product.count({
         where: {
           gender: this.toPrismaGender(gender),
+          title: { contains: search },
         },
       });
     } catch (error) {

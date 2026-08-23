@@ -9,11 +9,13 @@ import { productToResponse } from "../mappers/product.mapper";
 interface PaginationOptions {
   page?: number;
   take?: number;
+  search?: string;
 }
 
 export const getPaginatedProductsWithImages = async ({
   page = 1,
   take = 12,
+  search = "",
 }: PaginationOptions = {}): Promise<ProductResponse[]> => {
   if (isNaN(page) || isNaN(take)) page = 1;
   if (page < 1) page = 1;
@@ -24,6 +26,7 @@ export const getPaginatedProductsWithImages = async ({
     const data = await handleProductsUseCase.getAllProductsWithImages(
       page,
       take,
+      search,
     );
 
     return data.map(productToResponse);
@@ -32,10 +35,11 @@ export const getPaginatedProductsWithImages = async ({
   }
 };
 
-export const getQuantityProducts = async (): Promise<number> => {
+export const getQuantityProducts = async (search?: string): Promise<number> => {
   const handleProductsUseCase = getHandleProductsUseCase();
+  if (!search) search = "";
   try {
-    return await handleProductsUseCase.getQuantityProducts();
+    return await handleProductsUseCase.getQuantityProducts(search);
   } catch (error) {
     throw error;
   }
@@ -43,7 +47,7 @@ export const getQuantityProducts = async (): Promise<number> => {
 
 export const getProductsByGender = async (
   gender: Gender,
-  { page = 1, take = 12 }: PaginationOptions = {},
+  { page = 1, take = 12, search = "" }: PaginationOptions = {},
 ): Promise<ProductResponse[]> => {
   const handleProductsUseCase = getHandleProductsUseCase();
 
@@ -59,6 +63,7 @@ export const getProductsByGender = async (
       gender,
       page,
       take,
+      search,
     );
 
     return data.map(productToResponse);
@@ -69,10 +74,15 @@ export const getProductsByGender = async (
 
 export const getQuantityProductsByGender = async (
   gender: Gender,
+  search?: string,
 ): Promise<number> => {
   const handleProductsUseCase = getHandleProductsUseCase();
+  if (!search) search = "";
   try {
-    return await handleProductsUseCase.getQuantityProductsByGender(gender);
+    return await handleProductsUseCase.getQuantityProductsByGender(
+      gender,
+      search,
+    );
   } catch (error) {
     throw error;
   }

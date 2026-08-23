@@ -64,7 +64,7 @@ export default async function ProfilePage({ searchParams }: Props) {
           </div>
         </div>
       )}
-      {!(user.getRole().toString() === "ADMIN") && (
+      {!(user.getRole().toString() === "ADMIN") && orders.length > 0 && (
         <section className="mt-12">
           <h2 className="mb-6 text-2xl font-semibold text-slate-800">
             Mis Órdenes Pagadas

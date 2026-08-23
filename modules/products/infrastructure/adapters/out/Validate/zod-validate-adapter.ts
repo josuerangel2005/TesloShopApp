@@ -8,7 +8,7 @@ import {
   imagesQuantityScheme,
   inStockScheme,
   priceScheme,
-  sizesScheme,
+  sizesArrayScheme,
   slugScheme,
   tagsScheme,
   titleScheme,
@@ -21,7 +21,7 @@ export class ZodValidateAdapter implements ForValidateProduct {
   private readonly descriptionValidator: typeof descriptionScheme;
   private readonly inStockValidator: typeof inStockScheme;
   private readonly priceValidator: typeof priceScheme;
-  private readonly sizesValidator: typeof sizesScheme;
+  private readonly sizesValidator: typeof sizesArrayScheme;
   private readonly slugValidator: typeof slugScheme;
   private readonly tagsValidator: typeof tagsScheme;
   private readonly imagesQuantityValidator: typeof imagesQuantityScheme;
@@ -33,7 +33,7 @@ export class ZodValidateAdapter implements ForValidateProduct {
     descriptionValidator: typeof descriptionScheme,
     inStockValidator: typeof inStockScheme,
     priceValidator: typeof priceScheme,
-    sizesValidator: typeof sizesScheme,
+    sizesValidator: typeof sizesArrayScheme,
     slugValidator: typeof slugScheme,
     tagsValidator: typeof tagsScheme,
     imagesQuantityValidator: typeof imagesQuantityScheme,

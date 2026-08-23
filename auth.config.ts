@@ -12,6 +12,14 @@ export const authConfig: NextAuthConfig = {
       //rutas que necesita role = ADMIN
       if (path.startsWith("/admin")) return user?.role === "ADMIN";
 
+      //rutas a las que no  puede acceder si se es ADMIN
+      if (
+        path.endsWith("/cart") ||
+        path.includes("/checkout") ||
+        path.includes("/empty")
+      )
+        return user?.role !== "ADMIN";
+
       //rutas a las que no se puede acceder si ya se está logueado
       if (path.startsWith("/auth") && !path.includes("/verify-email"))
         return !user;

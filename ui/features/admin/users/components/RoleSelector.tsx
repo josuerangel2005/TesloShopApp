@@ -1,6 +1,10 @@
 "use client";
 
-import { IoPersonOutline, IoShieldCheckmarkOutline } from "react-icons/io5";
+import {
+  IoChevronDownOutline,
+  IoPersonOutline,
+  IoShieldCheckmarkOutline,
+} from "react-icons/io5";
 import { updateUserRoleAction } from "../actions/update-user-role-action";
 
 interface Props {
@@ -27,6 +31,13 @@ export const RoleSelector = ({ initialRole, userId }: Props) => {
         ) : (
           <IoPersonOutline size={14} />
         )}
+      </span>
+      <span
+        className={`pointer-events-none absolute right-3 inline-flex items-center transition-colors ${
+          isAdmin ? "text-indigo-700" : "text-slate-600"
+        }`}
+      >
+        <IoChevronDownOutline size={14} />
       </span>
       <select
         value={initialRole}

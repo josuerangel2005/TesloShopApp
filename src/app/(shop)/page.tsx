@@ -19,25 +19,39 @@ import {
   getQuantityProducts,
 } from "../../../ui/features/product/actions/product-pagination";
 import { Pagination } from "../../../ui/components/pagination/Pagination";
-import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { Fallback } from "../../../ui/components/fallback/Fallback";
+import { ProductsNotFound } from "../../../ui/components/not-found/ProductsNotFound";
 
 interface Props {
-  searchParams: Promise<{ page: number }>;
+  searchParams: Promise<{ page: number; search: string }>;
 }
 
-export default async function ({ searchParams }: Props) {
-  const page = (await searchParams).page;
-  const productsTemp = await getPaginatedProductsWithImages({
-    page,
-  });
-  const totalProducts = await getQuantityProducts();
-
-  if (productsTemp.length === 0) redirect("/");
-
+export default function CatalogPage({ searchParams }: Props) {
   return (
     <>
       <Title title="Tienda" subTitle="Todos los productos" className="mb-2" />
-      <ProductsGrid products={productsTemp} />
+      <Suspense fallback={<Fallback entity="productos" />}>
+        <AsyncProductsGrid searchParams={searchParams} />
+      </Suspense>
+    </>
+  );
+}
+
+export async function AsyncProductsGrid({ searchParams }: Props) {
+  const page = (await searchParams).page;
+  const search = (await searchParams).search;
+  const products = await getPaginatedProductsWithImages({
+    page,
+    search,
+  });
+  const totalProducts = await getQuantityProducts(search);
+
+  if (products.length === 0) return <ProductsNotFound />;
+
+  return (
+    <>
+      <ProductsGrid products={products} />
       <Pagination take={12} totalElements={totalProducts} />
     </>
   );

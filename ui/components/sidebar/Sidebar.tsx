@@ -26,21 +26,7 @@ export const Sidebar = ({
           hidden ? "translate-x-full pointer-events-none" : "translate-x-0"
         }`}
       >
-        {/* Input */}
-        <div className="relative mt-14 flex items-center">
-          <IoSearchOutline
-            size={20}
-            className="absolute top-2 left-2 text-slate-400"
-          />
-          <input
-            type="text"
-            placeholder="Buscar"
-            className="w-full bg-gray-50 rounded pl-10 py-1 pr-10 border-b-2 text-xl border-gray-200 transition-colors focus:outline-none focus:border-blue-500"
-          />
-        </div>
-
         {/* Menu */}
-
         <MenuButtons isAuthenticated={isAuthenticated} rol={rol} />
       </nav>
 

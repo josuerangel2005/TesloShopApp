@@ -43,24 +43,34 @@ export class HandleProductsUseCase {
   public getAllProductsWithImages(
     page: number,
     take: number,
+    search: string,
   ): Promise<Product[]> {
-    return this.forHandleProducts.getAllProductsWithImages(page, take);
+    return this.forHandleProducts.getAllProductsWithImages(page, take, search);
   }
 
-  public getQuantityProducts(): Promise<number> {
-    return this.forHandleProducts.getQuantityProducts();
+  public getQuantityProducts(search: string): Promise<number> {
+    return this.forHandleProducts.getQuantityProducts(search);
   }
 
   public getProductsByGender(
     gender: Gender,
     page: number,
     take: number,
+    search: string,
   ): Promise<Product[]> {
-    return this.forHandleProducts.getProductsByGender(gender, page, take);
+    return this.forHandleProducts.getProductsByGender(
+      gender,
+      page,
+      take,
+      search,
+    );
   }
 
-  public getQuantityProductsByGender(gender: Gender): Promise<number> {
-    return this.forHandleProducts.getQuantityProductsByGender(gender);
+  public getQuantityProductsByGender(
+    gender: Gender,
+    search: string,
+  ): Promise<number> {
+    return this.forHandleProducts.getQuantityProductsByGender(gender, search);
   }
 
   public getProductBySlug(slug: string): Promise<Product> {
@@ -86,7 +96,7 @@ export class HandleProductsUseCase {
     return this.forHandleProducts.saveProduct(productSave, imagesUpload);
   }
 
-  public deleteProduct(productId: string): Promise<void> {
+  public deleteProductById(productId: string): Promise<void> {
     return this.forHandleProducts.deleteProductById(productId);
   }
 

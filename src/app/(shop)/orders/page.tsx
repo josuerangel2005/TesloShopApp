@@ -32,7 +32,14 @@ export default async function ({ searchParams }: Props) {
   return (
     <div className="mb-20 flex flex-col items-center px-4 sm:px-0">
       <div className="flex w-full max-w-[900px] flex-col">
-        <Title title="Mis Órdenes" subTitle="Historial de tus compras" />
+        <Title
+          title={isAdmin ? "Todas las Órdenes" : "Mis Órdenes"}
+          subTitle={
+            isAdmin
+              ? "Historial de todas las compras"
+              : "Historial de tus compras"
+          }
+        />
         <OrdersTable orders={orders} totalOrders={totalOrders} />
       </div>
     </div>

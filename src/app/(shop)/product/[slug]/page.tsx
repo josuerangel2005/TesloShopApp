@@ -10,6 +10,7 @@ import {
 import { getProductBySlug } from "../../../../../ui/features/product/actions/get-product-by-slug";
 import { StockLabel } from "../../../../../ui/features/product/components/stock-label/StockLabel";
 import { Metadata, ResolvingMetadata } from "next";
+import { getHandleAuthUseCase } from "../../../../../modules/auth";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -42,6 +43,7 @@ export async function generateMetadata(
 export default async function ({ params }: Props) {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
+  const user = await getHandleAuthUseCase().getSession();
 
   if (!product) notFound();
 
@@ -84,7 +86,7 @@ export default async function ({ params }: Props) {
             {usd.format(product.price)}
           </p>
 
-          <ProductDetails product={product} />
+          <ProductDetails product={product} role={user?.getRole()} />
 
           <div className="mt-8">
             <h3 className="font-semibold text-sm uppercase tracking-wide text-slate-700">

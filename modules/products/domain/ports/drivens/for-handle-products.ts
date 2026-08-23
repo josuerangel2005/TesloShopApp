@@ -8,19 +8,27 @@ import { Product } from "../../model/product";
 
 export interface ForHandleProducts {
   deleteAll: () => Promise<void>;
-  getAllProductsWithImages: (page: number, take: number) => Promise<Product[]>;
+  getAllProductsWithImages: (
+    page: number,
+    take: number,
+    search: string,
+  ) => Promise<Product[]>;
   getCategoryByName: (name: string) => Promise<Category>;
   getProductIdBySlug: (slug: string) => Promise<string>;
   getProductsByGender: (
     gender: Gender,
     page: number,
     take: number,
+    search: string,
   ) => Promise<Product[]>;
-  getQuantityProducts: () => Promise<number>;
+  getQuantityProducts: (search: string) => Promise<number>;
   saveAllCategories: (categories: CategorySaveCommand[]) => Promise<void>;
   saveAllImageProducts: (images: ProductImageSaveCommand[]) => Promise<void>;
   saveAllProducts: (products: ProductSaveCommand[]) => Promise<void>;
-  getQuantityProductsByGender: (gender: Gender) => Promise<number>;
+  getQuantityProductsByGender: (
+    gender: Gender,
+    search: string,
+  ) => Promise<number>;
   getProductBySlug: (slug: string) => Promise<Product>;
   getProductsByIds: (ids: string[]) => Promise<Product[]>;
   getStockByProductSlug: (slug: string) => Promise<number>;

@@ -10,9 +10,10 @@ import { Size } from "../../../../../modules/shared/ui-state/domain/model/size";
 
 interface Props {
   product: ProductResponse;
+  role?: string;
 }
 
-export const ProductDetails = ({ product }: Props) => {
+export const ProductDetails = ({ product, role }: Props) => {
   const [selectedSize, setSelectedSize] = useState<Size | null>(
     (product.sizes[0] as Size) ?? null,
   );
@@ -55,7 +56,7 @@ export const ProductDetails = ({ product }: Props) => {
       </div>
 
       <button
-        disabled={product.inStock < 1}
+        disabled={product.inStock < 1 || role === "ADMIN"}
         type="button"
         onClick={() => addToCard()}
         className="btn-primary w-full mt-6 disabled:opacity-50 disabled:cursor-not-allowed"

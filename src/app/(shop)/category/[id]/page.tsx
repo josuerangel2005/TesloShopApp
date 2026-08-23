@@ -14,26 +14,41 @@ import {
 } from "../../../../../ui/features/product/actions/product-pagination";
 import { Gender } from "../../../../../modules/products/domain/model/gender";
 import { Pagination } from "../../../../../ui/components/pagination/Pagination";
+import { Suspense } from "react";
+import { Fallback } from "../../../../../ui/components/fallback/Fallback";
+import { ProductsNotFound } from "../../../../../ui/components/not-found/ProductsNotFound";
 
 interface Props {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ page: number }>;
+  searchParams: Promise<{ page: number; search: string }>;
 }
 
-export default async function ({ params, searchParams }: Props) {
+export default function CategoryPage({ params, searchParams }: Props) {
+  return (
+    <Suspense fallback={<Fallback entity="productos" />}>
+      <AsyncCategoryPage params={params} searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+export async function AsyncCategoryPage({ params, searchParams }: Props) {
   const { id } = await params;
 
   if (!validGenders.includes(id)) notFound();
 
   const { page } = await searchParams;
+  const { search } = await searchParams;
 
   const products = await getProductsByGender(
     id.trim().toUpperCase() as Gender,
-    { page },
+    { page, search },
   );
   const totalProducts = await getQuantityProductsByGender(
     id.trim().toUpperCase() as Gender,
+    search,
   );
+
+  if (products.length === 0) return <ProductsNotFound />;
 
   return (
     <>

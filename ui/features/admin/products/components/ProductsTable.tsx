@@ -9,6 +9,7 @@ import Image from "next/image";
 import { Pagination } from "../../../../components/pagination/Pagination";
 import { ProductResponse } from "../../../product";
 import Link from "next/link";
+import { DeleteProductButton } from "./DeleteProductButton";
 
 interface Props {
   products: ProductResponse[];
@@ -151,13 +152,7 @@ export const ProductsTable = ({ products, totalProducts }: Props) => {
                       <IoPencilOutline size={15} />
                       Modificar
                     </Link>
-                    <button
-                      type="button"
-                      className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-100"
-                    >
-                      <IoTrashOutline size={15} />
-                      Eliminar
-                    </button>
+                    <DeleteProductButton productId={product.id} />
                   </div>
                 </td>
               </tr>

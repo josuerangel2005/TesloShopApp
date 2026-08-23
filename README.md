@@ -55,7 +55,7 @@ domain/
   error/        Excepciones de dominio (ProductAlreadyExists, CategoryNotExists...)
   ports/driven/ Puertos manejados — los contratos que la infraestructura debe cumplir
 application/
-  usecases/     Orquestación (HandleProductsUseCase)
+  usecases/     Orquestación (HandleProductsUseCase, ValidateProductUseCase)
 infrastructure/
   adapters/out/
     HandleProducts/   PrismaProductsHandler — CRUD completo + consultas
@@ -65,8 +65,8 @@ infrastructure/
 
 Solo la **infraestructura** toca Prisma. El **dominio** declara el contrato
 (`ForHandleProducts`), la **aplicación** lo orquesta
-(`HandleProductsUseCase`) y el **adaptador** lo implementa
-(`PrismaProductsHandler`). Cada capa mapea sus propios datos:
+(`HandleProductsUseCase`, `ValidateProductUseCase`) y el **adaptador** lo implementa
+(`PrismaProductsHandler`, `ZodValidateAdapter`). Cada capa mapea sus propios datos:
 
 - Los mappers `utils/` del adaptador convierten **filas → dominio** (con
   `include` de relaciones).
@@ -572,6 +572,35 @@ teslo-shop/
   servicio Spring (`BILLING_API_URL`) genera el PDF → URL del documento →
   correo con el enlace (`invoice-email`). PDFShift queda como alternativa
   de conversión HTML → PDF.
+- **Búsqueda y filtro**: barra de búsqueda animada en `TopMenu` con
+  expansión inline, param `?search=` (no `?q=`). Resultados filtrados
+  server-side con `title.contains` (Prisma). Página `/products?q=...`
+  filtra server-side. Página de catálogo (`/`) filtra por `?search=`.
+- **Validación dual**: React Hook Form (cliente, UX) + hexágono Zod
+  (`ZodValidateAdapter`) en servidor. Esquemas Zod compartidos cliente/servidor.
+  Esquemas relajados: título permite dígitos, descripción permite puntuación.
+- **NotFound inteligente**: `ProductsNotFound` parametrizado — 404 clásico o
+  "Sin resultados" según query `?search=`. Componente `NotFoundContent`
+  detecta `?search=` vía `useSearchParams()` y adapta badge, código, título,
+  descripción y botón CTA. `not-found.tsx` usa `Suspense` + cliente para
+  leer `useSearchParams()` y delegar a `ProductsNotFound` con props correctas.
+- **TopMenu rediseñado**: dos filas (logo/acciones arriba, categorías abajo).
+  Categorías con scroll horizontal nativo en móvil (`overflow-x-auto`),
+  inline en desktop. Logo + acciones arriba, categorías debajo.
+- **Imágenes consistentes**: la BD guarda siempre rutas completas (seed
+  persiste `/products/<archivo>`; uploads guardan la URL de Cloudinary). La
+  UI consume `url` plano vía `next/image`.
+- **Validación de formularios**: `saveProductAction` y `updateProductAction`
+  normalizan `tags` (string→array), `price` e `inStock` (string→number) antes
+  de validar y persistir. `slugScheme` permite guiones bajos; `titleScheme`
+  permite dígitos; `descriptionScheme` permite puntuación común.
+- **Server actions**: `saveProductAction`, `updateProductAction`,
+  `deleteProductById`, `getAllCategoriesAction`, `sendInvoiceEmailAction`.
+  Facturación via Spring Boot (`BILLING_API_URL`) + PDFShift fallback.
+- **Órdenes**: `Order`, `OrderItem`, `OrderAddress` + caso de uso + adaptador
+  Prisma + factura por email con Spring + PDFShift.
+- **Admin panel**: dashboard, usuarios (`RoleSelector`), productos CRUD
+  con `ProductForm` (RHF + Zod), subida imágenes Cloudinary.
 - Sin tests automatizados todavía (sin runner ni suite configurada).
 
 ---
