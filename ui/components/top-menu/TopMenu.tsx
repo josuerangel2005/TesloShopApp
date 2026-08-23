@@ -44,7 +44,7 @@ export const TopMenu = async ({
         {/* Search, Cart, Menu */}
         <div className="flex items-center gap-0.5 sm:gap-1 shrink-0 order-2 md:order-3">
           <TopMenuSearch />
-          {user?.getRole() !== "ADMIN" && (
+          {user && user?.getRole() !== "ADMIN" && (
             <TopMenuPendingOrdersBadge
               pendingOrders={pendingOrdersCount ?? 0}
             />
