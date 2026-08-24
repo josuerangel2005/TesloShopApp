@@ -36,83 +36,77 @@ export const UsersTable = ({ users, totalUsers }: Props) => {
   const emptyRows = Math.max(0, ROWS_PER_PAGE - users.length);
   return (
     <>
-      <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
-        <table className="min-w-full divide-y divide-slate-100">
-          <thead className="bg-slate-50">
-            <tr>
-              <th
-                scope="col"
-                className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500"
-              >
-                Usuario
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500"
-              >
-                Rol
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500"
-              >
-                Verificado
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {users.map((user, index) => (
-              <tr
-                key={user.id}
-                className="bg-white transition-colors duration-300 hover:bg-slate-50/70"
-              >
-                <td className="whitespace-nowrap px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white ${
-                        AVATAR_GRADIENTS[index % AVATAR_GRADIENTS.length]
-                      }`}
-                    >
-                      {getInitials(user.name)}
-                    </span>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium text-slate-900">
-                        {user.name}
+      <div className="bg-transparent">
+        <div className="overflow-x-auto rounded-2xl ring-1 ring-slate-200">
+          <table className="min-w-[800px] md:min-w-0 md:w-full divide-y divide-slate-100">
+            <thead className="bg-slate-50">
+              <tr>
+                <th
+                  scope="col"
+                  className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500"
+                >
+                  Usuario
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500"
+                >
+                  Rol
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500"
+                >
+                  Verificado
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {users.map((user, index) => (
+                <tr
+                  key={user.id}
+                  className="bg-white transition-colors duration-300 hover:bg-slate-50/70"
+                >
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white ${
+                          AVATAR_GRADIENTS[index % AVATAR_GRADIENTS.length]
+                        }`}
+                      >
+                        {getInitials(user.name)}
                       </span>
-                      <span className="text-sm text-slate-500">
-                        {user.email}
-                      </span>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-slate-900">
+                          {user.name}
+                        </span>
+                        <span className="text-sm text-slate-500">
+                          {user.email}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td className="whitespace-nowrap px-6 py-4">
-                  <RoleSelector initialRole={user.role} userId={user.id} />
-                </td>
-                <td className="whitespace-nowrap px-6 py-4">
-                  {user.emailVerified ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
-                      <IoCheckmarkCircleOutline size={14} />
-                      Verificado
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 ring-1 ring-red-200">
-                      <IoCloseCircleOutline size={14} />
-                      Pendiente
-                    </span>
-                  )}
-                </td>
-              </tr>
-            ))}
-
-            {Array.from({ length: emptyRows }).map((_, i) => (
-              <tr key={`empty-${i}`}>
-                <td className="px-6 py-4" colSpan={4}>
-                  &nbsp;
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <RoleSelector initialRole={user.role} userId={user.id} />
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    {user.emailVerified ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                        <IoCheckmarkCircleOutline size={14} />
+                        Verificado
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 ring-1 ring-red-200">
+                        <IoCloseCircleOutline size={14} />
+                        Pendiente
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
       <Pagination take={6} totalElements={totalUsers} />
     </>
