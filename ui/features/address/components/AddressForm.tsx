@@ -216,7 +216,9 @@ export const AddressForm = ({ countries }: Props) => {
 
           <input
             id="firstName"
-            {...register("firstName")}
+            {...register("firstName", {
+              required: "Campo Obligatorio",
+            })}
             type="text"
             placeholder="Juan"
             aria-invalid={!!errors.firstName}
@@ -241,7 +243,9 @@ export const AddressForm = ({ countries }: Props) => {
 
           <input
             id="lastName"
-            {...register("lastName")}
+            {...register("lastName", {
+              required: "Campo Obligatorio",
+            })}
             type="text"
             placeholder="Pérez"
             aria-invalid={!!errors.lastName}
@@ -266,7 +270,9 @@ export const AddressForm = ({ countries }: Props) => {
 
           <input
             id="address"
-            {...register("address")}
+            {...register("address", {
+              required: "Campo Obligatorio",
+            })}
             type="text"
             placeholder="Av. Principal 123"
             aria-invalid={!!errors.address}
@@ -317,7 +323,9 @@ export const AddressForm = ({ countries }: Props) => {
 
           <input
             id="postalCode"
-            {...register("postalCode")}
+            {...register("postalCode", {
+              required: "Campo Obligatorio",
+            })}
             type="text"
             placeholder="10101"
             aria-invalid={!!errors.postalCode}
@@ -341,7 +349,9 @@ export const AddressForm = ({ countries }: Props) => {
 
           <input
             id="city"
-            {...register("city")}
+            {...register("city", {
+              required: "Campo Obligatorio",
+            })}
             type="text"
             placeholder="San José"
             aria-invalid={!!errors.city}
@@ -363,7 +373,9 @@ export const AddressForm = ({ countries }: Props) => {
 
           <select
             id="country"
-            {...register("country")}
+            {...register("country", {
+              required: "Campo Obligatorio",
+            })}
             aria-invalid={!!errors.country}
             aria-describedby={errors.country ? "country-error" : undefined}
             className={getFieldClass(!!errors.country)}
@@ -393,7 +405,9 @@ export const AddressForm = ({ countries }: Props) => {
 
           <input
             id="phone"
-            {...register("phone")}
+            {...register("phone", {
+              required: "Campo Obligatorio",
+            })}
             type="tel"
             placeholder="+506 8888 8888"
             aria-invalid={!!errors.phone}
