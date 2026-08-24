@@ -17,7 +17,7 @@ export default async function ShopLayout({
   const pendingOrdersCount = await getPendingOrdersCountAction();
 
   return (
-    <main className="flex min-h-screen flex-col">
+    <main className="flex min-h-screen flex-col p-2">
       <SidebarWrapper isAuthenticated={isAuthenticated} rol={userRol} />
       <TopMenu role={userRol} pendingOrdersCount={pendingOrdersCount} />
       <div className="flex-1 px-0 sm:px-10">{children}</div>
