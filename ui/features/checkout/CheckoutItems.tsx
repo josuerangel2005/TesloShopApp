@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import {
   IoArrowBackOutline,
   IoLocationOutline,
@@ -16,7 +16,7 @@ import { addressToCheckoutAddress } from "./mapper/checkout-address.mapper";
 import { cartProductsToCheckoutCartProducts } from "./mapper/checkout-cart-product.mapper";
 import { useRouter } from "next/navigation";
 import { getHandlePendingNumberOrdersFactory } from "../../../modules/shared/ui-state/infrastructure/config/factory/handle-pending-number-orders-factory";
-
+import { getAddressByUserIdAction } from "../address/actions/get-address-by-user-id-action";
 const usd = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",

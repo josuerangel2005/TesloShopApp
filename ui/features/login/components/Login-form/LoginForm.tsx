@@ -1,8 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useActionState } from "react";
-import { IoAlertCircleOutline } from "react-icons/io5";
+import { useEffect, useRef, useActionState, useState } from "react";
+import {
+  IoAlertCircleOutline,
+  IoEye,
+  IoEyedrop,
+  IoEyedropOutline,
+  IoEyeOff,
+} from "react-icons/io5";
 import { authenticate } from "../../actions/login-action";
 import { getShowMessageUseCase } from "../../../../../modules/shared/ui-state";
 
@@ -17,6 +23,9 @@ export const LoginForm = ({ fieldClass, registered }: Props) => {
     undefined,
   );
   const showedRegisteredToast = useRef(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (registered && !showedRegisteredToast.current) {
@@ -41,6 +50,8 @@ export const LoginForm = ({ fieldClass, registered }: Props) => {
           id="login-email"
           type="email"
           name="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           placeholder="tu@correo.com"
           className={fieldClass}
         />
@@ -59,13 +70,28 @@ export const LoginForm = ({ fieldClass, registered }: Props) => {
         >
           Contraseña
         </label>
-        <input
-          id="login-password"
-          name="password"
-          type="password"
-          placeholder="••••••••"
-          className={fieldClass}
-        />
+        <div className="w-full flex items-center relative">
+          <input
+            id="login-password"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            value={password}
+            placeholder="••••••••"
+            className={`${fieldClass} w-full`}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button
+            className="absolute right-1.5 cursor-pointer"
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+          >
+            {showPassword ? (
+              <IoEyeOff className="text-gray-300 hover:text-gray-500 transition-all" />
+            ) : (
+              <IoEye className="text-gray-300 hover:text-gray-500 transition-all" />
+            )}
+          </button>
+        </div>
         {state?.fieldsErrors?.password && (
           <p className="mt-1 flex items-center gap-1.5 text-sm text-red-600">
             <IoAlertCircleOutline size={16} className="shrink-0" />

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useActionState } from "react";
 import {
   IoCloseOutline,
+  IoEye,
+  IoEyeOff,
   IoImageOutline,
   IoPersonCircleOutline,
 } from "react-icons/io5";
@@ -18,6 +20,10 @@ export const RegisterForm = ({ fieldClass }: Props) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [state, formAction, isPending] = useActionState(register, {});
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -99,9 +105,11 @@ export const RegisterForm = ({ fieldClass }: Props) => {
         </label>
         <input
           id="signup-name"
+          value={name}
           name="name"
           type="text"
           placeholder="Juan Pérez"
+          onChange={(e) => setName(e.target.value)}
           className={fieldClass}
         />
         {state.fieldErrors?.name && (
@@ -118,10 +126,12 @@ export const RegisterForm = ({ fieldClass }: Props) => {
         </label>
         <input
           id="signup-email"
+          value={email}
           name="email"
           type="email"
           placeholder="tu@correo.com"
           className={fieldClass}
+          onChange={(e) => setEmail(e.target.value)}
         />
         {state.fieldErrors?.email && (
           <ErrorMessage message={state.fieldErrors.email} />
@@ -130,21 +140,36 @@ export const RegisterForm = ({ fieldClass }: Props) => {
 
       <div className="flex flex-col gap-1.5">
         <label
-          htmlFor="signup-password"
+          htmlFor="login-password"
           className="text-sm font-medium text-slate-700"
         >
           Contraseña
         </label>
-        <input
-          id="signup-password"
-          name="password"
-          type="password"
-          placeholder="••••••••"
-          className={fieldClass}
-        />
-        {state.fieldErrors?.password && (
-          <ErrorMessage message={state.fieldErrors.password} />
-        )}
+        <div className="w-full flex items-center relative">
+          <input
+            id="login-password"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            value={password}
+            placeholder="••••••••"
+            className={`${fieldClass} w-full`}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button
+            className="absolute right-1.5 cursor-pointer"
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+          >
+            {showPassword ? (
+              <IoEyeOff className="text-gray-300 hover:text-gray-500 transition-all" />
+            ) : (
+              <IoEye className="text-gray-300 hover:text-gray-500 transition-all" />
+            )}
+          </button>
+          {state.fieldErrors?.password && (
+            <ErrorMessage message={state.fieldErrors.password} />
+          )}
+        </div>
       </div>
 
       {state.serverError && <ErrorMessage message={state.serverError} />}

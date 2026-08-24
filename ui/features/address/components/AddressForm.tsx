@@ -1,22 +1,42 @@
 "use client";
+
 import { CountryActionResponse } from "../interface/country-action-response";
-import { saveUserAddressAction } from "../actions/save-user-address-action";
-import { deleteUserAddressAction } from "../actions/delete-user-address-action";
-import { useRouter } from "next/navigation";
 import { getHandleAddressStateUseCase } from "../../../../modules/shared/ui-state/infrastructure/config/factory/handle-address-state-use-case-factory";
-import { Address } from "../../../../modules/shared/ui-state/domain/model/address";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { getAddressByUserIdAction } from "../actions/get-address-by-user-id-action";
 import { addressResponseToAddress } from "../mapper/address.mapper";
-import { userAddressSchema } from "../../../../modules/shared/validation/domain/model/schemas";
+import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
+import { userAddressSchema } from "../../../../modules/shared/validation";
+import { Address } from "../../../../modules/shared/ui-state/domain/model/address";
+import { saveUserAddressAction } from "../actions/save-user-address-action";
+import { deleteUserAddressAction } from "../actions/delete-user-address-action";
 
-const fieldClass =
-  "rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 transition-colors placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
+const baseFieldClass =
+  "rounded-lg border bg-white px-3.5 py-2.5 text-sm text-slate-900 transition-all placeholder:text-slate-400 focus:outline-none focus:ring-2";
 
-const FieldErrorMessage = ({ message }: { message?: string }) =>
+const getFieldClass = (hasError: boolean) =>
+  `${baseFieldClass} ${
+    hasError
+      ? "border-red-400 focus:border-red-500 focus:ring-red-500/20"
+      : "border-slate-300 focus:border-primary focus:ring-primary/20"
+  }`;
+
+const FieldErrorMessage = ({
+  id,
+  message,
+}: {
+  id: string;
+  message?: string;
+}) =>
   message ? (
-    <p className="text-xs font-medium text-red-500" role="alert">
-      {message}
+    <p
+      id={id}
+      className="flex items-center gap-1 text-xs font-medium text-red-500"
+      role="alert"
+    >
+      <span aria-hidden="true">⚠</span>
+      <span>{message}</span>
     </p>
   ) : null;
 
@@ -24,32 +44,64 @@ interface Props {
   countries: CountryActionResponse[];
 }
 
-export const AddressForm = ({ countries }: Props) => {
-  const handleAddressStateUseCase = getHandleAddressStateUseCase();
+interface FormFields {
+  firstName: string;
+  lastName: string;
+  address: string;
+  address2: string;
+  postalCode: string;
+  city: string;
+  country: string;
+  phone: string;
+  remember: boolean;
+}
 
+const handleAddressStateUseCase = getHandleAddressStateUseCase();
+
+export const AddressForm = ({ countries }: Props) => {
   const address = useSyncExternalStore(
     (listener) => handleAddressStateUseCase.subscribe(listener),
     () => handleAddressStateUseCase.getAddress(),
     () => null,
   );
 
-  const router = useRouter();
   const [ready, setReady] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const router = useRouter();
+
+  const {
+    register,
+    reset,
+    formState: { errors, isSubmitting },
+    handleSubmit,
+    setError,
+    clearErrors,
+    getValues,
+  } = useForm<FormFields>({
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      address: "",
+      address2: "",
+      postalCode: "",
+      city: "",
+      country: "",
+      phone: "",
+      remember: true,
+    },
+  });
 
   useEffect(() => {
     const fetchAddress = async () => {
-      if (address) {
-        setReady(true);
-        return;
-      }
-
       try {
         const userAddress = await getAddressByUserIdAction();
+
         if (userAddress) {
           handleAddressStateUseCase.saveAddress(
             addressResponseToAddress(userAddress),
           );
+        } else {
+          handleAddressStateUseCase.deleteAddress();
         }
       } catch {
       } finally {
@@ -58,252 +110,325 @@ export const AddressForm = ({ countries }: Props) => {
     };
 
     fetchAddress();
-  }, [address, handleAddressStateUseCase]);
+  }, []);
 
-  const handleSubmitForm = async (formData: FormData) => {
-    const fields = {
-      firstName: formData.get("firstName")?.toString() ?? "",
-      lastName: formData.get("lastName")?.toString() ?? "",
-      address: formData.get("address")?.toString() ?? "",
-      address2: formData.get("address2")?.toString() ?? "",
-      postalCode: formData.get("postalCode")?.toString() ?? "",
-      city: formData.get("city")?.toString() ?? "",
-      country: formData.get("country")?.toString() ?? "",
-      phone: formData.get("phone")?.toString() ?? "",
-      remember: formData.get("remember") === "on",
-    };
+  useEffect(() => {
+    reset({
+      firstName: address?.getFirstName() ?? "",
+      lastName: address?.getLastName() ?? "",
+      address: address?.getAddress() ?? "",
+      address2: address?.getAddress2() ?? "",
+      postalCode: address?.getPostalCode() ?? "",
+      city: address?.getCity() ?? "",
+      country: address?.getCountry() ?? "",
+      phone: address?.getPhone() ?? "",
+      remember: getValues("remember"),
+    });
+  }, [address, reset, getValues]);
 
-    // Validación estricta client-side: campos vacíos/inválidos bloquean el avance
+  const handleOnSubmit = async (data: FormFields) => {
     const parsed = userAddressSchema.safeParse({
-      firstName: fields.firstName,
-      lastName: fields.lastName,
-      address: fields.address,
-      address2: fields.address2,
-      postalCode: fields.postalCode,
-      city: fields.city,
-      country: fields.country,
-      phone: fields.phone,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      address: data.address,
+      address2: data.address2,
+      postalCode: data.postalCode,
+      city: data.city,
+      country: data.country,
+      phone: data.phone,
     });
 
     if (!parsed.success) {
-      setFieldErrors(
-        Object.fromEntries(
-          Object.entries(parsed.error.flatten().fieldErrors).map(
-            ([field, messages]) => [field, messages?.[0] ?? "Campo inválido"],
-          ),
-        ),
-      );
+      clearErrors();
+
+      parsed.error.issues.forEach((issue) => {
+        const fieldName = issue.path[0] as keyof FormFields;
+
+        setError(fieldName, {
+          type: "manual",
+          message: issue.message,
+        });
+      });
+
       return;
     }
 
-    setFieldErrors({});
+    clearErrors();
 
     handleAddressStateUseCase.saveAddress(
       new Address(
-        fields.firstName,
-        fields.lastName,
-        fields.address,
-        fields.address2,
-        fields.postalCode,
-        fields.city,
-        fields.country,
-        fields.phone,
+        data.firstName,
+        data.lastName,
+        data.address,
+        data.address2,
+        data.postalCode,
+        data.city,
+        data.country,
+        data.phone,
       ),
     );
 
-    const remember = formData.get("remember") === "on";
+    const formData = new FormData();
 
-    if (remember) await saveUserAddressAction(formData);
-    else await deleteUserAddressAction();
+    formData.append("firstName", data.firstName);
+    formData.append("lastName", data.lastName);
+    formData.append("address", data.address);
+    formData.append("address2", data.address2);
+    formData.append("postalCode", data.postalCode);
+    formData.append("city", data.city);
+    formData.append("country", data.country);
+    formData.append("phone", data.phone);
+
+    if (data.remember) {
+      await saveUserAddressAction(formData);
+    } else {
+      await deleteUserAddressAction();
+    }
 
     router.push("/checkout");
   };
 
-  return (
-    <div className="address-card rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
-      {!ready ? (
+  if (!ready) {
+    return (
+      <div className="address-card rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
         <p className="py-8 text-center text-sm text-slate-500">
           Cargando dirección…
         </p>
-      ) : (
-        <form
-          action={handleSubmitForm}
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5"
-        >
-          <div className="address-field flex flex-col gap-1.5">
-            <label
-              htmlFor="firstName"
-              className="text-sm font-medium text-slate-700"
-            >
-              Nombres
-            </label>
-            <input
-              defaultValue={address?.getFirstName()}
-              id="firstName"
-              name="firstName"
-              type="text"
-              placeholder="Juan"
-              className={fieldClass}
-            />
-            <FieldErrorMessage message={fieldErrors.firstName} />
-          </div>
+      </div>
+    );
+  }
 
-          <div className="address-field flex flex-col gap-1.5">
-            <label
-              htmlFor="lastName"
-              className="text-sm font-medium text-slate-700"
-            >
-              Apellidos
-            </label>
-            <input
-              id="lastName"
-              defaultValue={address?.getLastName()}
-              type="text"
-              name="lastName"
-              placeholder="Pérez"
-              className={fieldClass}
-            />
-            <FieldErrorMessage message={fieldErrors.lastName} />
-          </div>
+  return (
+    <div className="address-card rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
+      <form
+        onSubmit={handleSubmit(handleOnSubmit)}
+        noValidate
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5"
+      >
+        {/* First name */}
+        <div className="flex flex-col gap-1.5">
+          <label
+            htmlFor="firstName"
+            className="text-sm font-medium text-slate-700"
+          >
+            Nombres
+          </label>
 
-          <div className="address-field flex flex-col gap-1.5">
-            <label
-              htmlFor="address"
-              className="text-sm font-medium text-slate-700"
-            >
-              Dirección
-            </label>
-            <input
-              id="address"
-              defaultValue={address?.getAddress()}
-              type="text"
-              name="address"
-              placeholder="Av. Principal 123"
-              className={fieldClass}
-            />
-            <FieldErrorMessage message={fieldErrors.address} />
-          </div>
+          <input
+            id="firstName"
+            {...register("firstName")}
+            type="text"
+            placeholder="Juan"
+            aria-invalid={!!errors.firstName}
+            aria-describedby={errors.firstName ? "firstName-error" : undefined}
+            className={getFieldClass(!!errors.firstName)}
+          />
 
-          <div className="address-field flex flex-col gap-1.5">
-            <label
-              htmlFor="address2"
-              className="text-sm font-medium text-slate-700"
-            >
-              Dirección 2 (opcional)
-            </label>
-            <input
-              id="address2"
-              type="text"
-              defaultValue={address?.getAddress2() ?? ""}
-              name="address2"
-              placeholder="Depto, oficina, piso"
-              className={fieldClass}
-            />
-            <FieldErrorMessage message={fieldErrors.address2} />
-          </div>
+          <FieldErrorMessage
+            id="firstName-error"
+            message={errors.firstName?.message}
+          />
+        </div>
 
-          <div className="address-field flex flex-col gap-1.5">
-            <label
-              htmlFor="postalCode"
-              className="text-sm font-medium text-slate-700"
-            >
-              Código postal
-            </label>
-            <input
-              id="postalCode"
-              name="postalCode"
-              defaultValue={address?.getPostalCode()}
-              type="text"
-              placeholder="10101"
-              className={fieldClass}
-            />
-            <FieldErrorMessage message={fieldErrors.postalCode} />
-          </div>
+        {/* Last name */}
+        <div className="flex flex-col gap-1.5">
+          <label
+            htmlFor="lastName"
+            className="text-sm font-medium text-slate-700"
+          >
+            Apellidos
+          </label>
 
-          <div className="address-field flex flex-col gap-1.5">
-            <label
-              htmlFor="city"
-              className="text-sm font-medium text-slate-700"
-            >
-              Ciudad
-            </label>
-            <input
-              id="city"
-              type="text"
-              defaultValue={address?.getCity()}
-              name="city"
-              placeholder="San José"
-              className={fieldClass}
-            />
-            <FieldErrorMessage message={fieldErrors.city} />
-          </div>
+          <input
+            id="lastName"
+            {...register("lastName")}
+            type="text"
+            placeholder="Pérez"
+            aria-invalid={!!errors.lastName}
+            aria-describedby={errors.lastName ? "lastName-error" : undefined}
+            className={getFieldClass(!!errors.lastName)}
+          />
 
-          <div className="address-field flex flex-col gap-1.5">
-            <label
-              htmlFor="country"
-              className="text-sm font-medium text-slate-700"
-            >
-              País
-            </label>
-            <select
-              id="country"
-              name="country"
-              defaultValue={address?.getCountry()}
-              className={fieldClass}
-            >
-              <option value="" disabled>
-                Selecciona un país
+          <FieldErrorMessage
+            id="lastName-error"
+            message={errors.lastName?.message}
+          />
+        </div>
+
+        {/* Address */}
+        <div className="flex flex-col gap-1.5">
+          <label
+            htmlFor="address"
+            className="text-sm font-medium text-slate-700"
+          >
+            Dirección
+          </label>
+
+          <input
+            id="address"
+            {...register("address")}
+            type="text"
+            placeholder="Av. Principal 123"
+            aria-invalid={!!errors.address}
+            aria-describedby={errors.address ? "address-error" : undefined}
+            className={getFieldClass(!!errors.address)}
+          />
+
+          <FieldErrorMessage
+            id="address-error"
+            message={errors.address?.message}
+          />
+        </div>
+
+        {/* Address 2 */}
+        <div className="flex flex-col gap-1.5">
+          <label
+            htmlFor="address2"
+            className="text-sm font-medium text-slate-700"
+          >
+            Dirección 2{" "}
+            <span className="font-normal text-slate-400">(opcional)</span>
+          </label>
+
+          <input
+            id="address2"
+            {...register("address2")}
+            type="text"
+            placeholder="Depto, oficina, piso"
+            aria-invalid={!!errors.address2}
+            aria-describedby={errors.address2 ? "address2-error" : undefined}
+            className={getFieldClass(!!errors.address2)}
+          />
+
+          <FieldErrorMessage
+            id="address2-error"
+            message={errors.address2?.message}
+          />
+        </div>
+
+        {/* Postal code */}
+        <div className="flex flex-col gap-1.5">
+          <label
+            htmlFor="postalCode"
+            className="text-sm font-medium text-slate-700"
+          >
+            Código postal
+          </label>
+
+          <input
+            id="postalCode"
+            {...register("postalCode")}
+            type="text"
+            placeholder="10101"
+            aria-invalid={!!errors.postalCode}
+            aria-describedby={
+              errors.postalCode ? "postalCode-error" : undefined
+            }
+            className={getFieldClass(!!errors.postalCode)}
+          />
+
+          <FieldErrorMessage
+            id="postalCode-error"
+            message={errors.postalCode?.message}
+          />
+        </div>
+
+        {/* City */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="city" className="text-sm font-medium text-slate-700">
+            Ciudad
+          </label>
+
+          <input
+            id="city"
+            {...register("city")}
+            type="text"
+            placeholder="San José"
+            aria-invalid={!!errors.city}
+            aria-describedby={errors.city ? "city-error" : undefined}
+            className={getFieldClass(!!errors.city)}
+          />
+
+          <FieldErrorMessage id="city-error" message={errors.city?.message} />
+        </div>
+
+        {/* Country */}
+        <div className="flex flex-col gap-1.5">
+          <label
+            htmlFor="country"
+            className="text-sm font-medium text-slate-700"
+          >
+            País
+          </label>
+
+          <select
+            id="country"
+            {...register("country")}
+            aria-invalid={!!errors.country}
+            aria-describedby={errors.country ? "country-error" : undefined}
+            className={getFieldClass(!!errors.country)}
+          >
+            <option value="" disabled>
+              Selecciona un país
+            </option>
+
+            {countries.map((country) => (
+              <option key={country.id} value={country.id}>
+                {country.name}
               </option>
-              {countries.map((country) => (
-                <option key={country.id} value={country.id}>
-                  {country.name}
-                </option>
-              ))}
-            </select>
-            <FieldErrorMessage message={fieldErrors.country} />
-          </div>
-          <div className="address-field flex flex-col gap-1.5">
-            <label
-              htmlFor="phone"
-              className="text-sm font-medium text-slate-700"
-            >
-              Teléfono
-            </label>
+            ))}
+          </select>
+
+          <FieldErrorMessage
+            id="country-error"
+            message={errors.country?.message}
+          />
+        </div>
+
+        {/* Phone */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="phone" className="text-sm font-medium text-slate-700">
+            Teléfono
+          </label>
+
+          <input
+            id="phone"
+            {...register("phone")}
+            type="tel"
+            placeholder="+506 8888 8888"
+            aria-invalid={!!errors.phone}
+            aria-describedby={errors.phone ? "phone-error" : undefined}
+            className={getFieldClass(!!errors.phone)}
+          />
+
+          <FieldErrorMessage id="phone-error" message={errors.phone?.message} />
+        </div>
+
+        {/* Submit */}
+        <div className="flex flex-col gap-5 sm:col-span-2">
+          <label
+            htmlFor="remember-address"
+            className="flex cursor-pointer select-none items-center gap-2.5 text-sm text-slate-700"
+          >
             <input
-              id="phone"
-              name="phone"
-              defaultValue={address?.getPhone()}
-              type="text"
-              placeholder="+506 8888 8888"
-              className={fieldClass}
+              id="remember-address"
+              {...register("remember")}
+              type="checkbox"
+              className="size-4 cursor-pointer accent-primary"
             />
-            <FieldErrorMessage message={fieldErrors.phone} />
-          </div>
 
-          <div className="address-field address-submit flex flex-col gap-5 sm:col-span-2">
-            <label
-              htmlFor="remember-address"
-              className="flex cursor-pointer select-none items-center gap-2.5 text-sm text-slate-700"
-            >
-              <input
-                id="remember-address"
-                name="remember"
-                type="checkbox"
-                defaultChecked
-                className="size-4 cursor-pointer accent-primary"
-              />
-              Recordar dirección para futuras compras
-            </label>
+            <span>Recordar dirección para futuras compras</span>
+          </label>
 
-            <button
-              type="submit"
-              className="btn-primary w-full justify-center text-center sm:w-1/2"
-            >
-              Siguiente
-            </button>
-          </div>
-        </form>
-      )}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="btn-primary w-full justify-center text-center transition-opacity disabled:cursor-not-allowed disabled:opacity-60 sm:w-1/2"
+          >
+            {isSubmitting ? "Guardando…" : "Siguiente"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

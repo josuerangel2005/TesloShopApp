@@ -19,4 +19,8 @@ export class HandleAddressStateUseCase {
   public saveAddress(address: Address): void {
     this.forAddressState.saveAddress(address);
   }
+
+  public deleteAddress(): void {
+    this.forAddressState.deleteAddress();
+  }
 }

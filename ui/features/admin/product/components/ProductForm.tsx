@@ -93,7 +93,7 @@ export const ProductForm = ({ product, categories }: Props) => {
   const {
     handleSubmit,
     register,
-    formState: { isValid, errors, defaultValues },
+    formState: { errors },
     watch,
     setValue,
     getValues,

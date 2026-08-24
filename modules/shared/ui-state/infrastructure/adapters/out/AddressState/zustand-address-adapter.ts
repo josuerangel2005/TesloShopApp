@@ -6,7 +6,8 @@ import { toAddressState } from "./utils/mapper/toAddressState";
 
 export class ZustandAddressAdapter implements ForAddressState {
   private addressState: typeof addressStore;
-  private lastState: ReturnType<typeof addressStore.getState>["address"] | undefined;
+  private lastState:
+    ReturnType<typeof addressStore.getState>["address"] | undefined;
   private lastDomain: Address | null;
 
   constructor(addressState: typeof addressStore) {
@@ -35,5 +36,9 @@ export class ZustandAddressAdapter implements ForAddressState {
 
   saveAddress(address: Address): void {
     this.addressState.getState().setAddress(toAddressState(address));
+  }
+
+  deleteAddress(): void {
+    this.addressState.getState().deleteAddress();
   }
 }
