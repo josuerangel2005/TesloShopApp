@@ -9,10 +9,11 @@ export const authConfig: NextAuthConfig = {
       const user = auth?.user;
       const path = request.nextUrl.pathname;
 
-      //rutas que necesita role = ADMIN
+      // Ruta pública: siempre accesible, tenga sesión o no
+      if (path.includes("/verify-email")) return true;
+
       if (path.startsWith("/admin")) return user?.role === "ADMIN";
 
-      //rutas a las que no  puede acceder si se es ADMIN
       if (
         path.endsWith("/cart") ||
         path.includes("/checkout") ||
@@ -20,11 +21,8 @@ export const authConfig: NextAuthConfig = {
       )
         return user?.role !== "ADMIN";
 
-      //rutas a las que no se puede acceder si ya se está logueado
-      if (path.startsWith("/auth") && !path.includes("/verify-email"))
-        return !user;
+      if (path.startsWith("/auth")) return !user;
 
-      //El resto solo exige sesión iniciada
       return !!user;
     },
     jwt({ token, user }) {
